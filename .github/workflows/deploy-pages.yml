@@ -1,0 +1,51 @@
+# نشر العرض التجريبي على GitHub Pages
+#
+# الموقع ملفات ثابتة مكتوبة يدوياً (index.html + css + js)، فلا حاجة
+# إلى Jekyll ولا إلى أي خطوة بناء: تُرفع الملفات كما هي.
+#
+# الزائر يصل إلى index.html الذي يستدعي js/dataService.demo.js،
+# أما index.php وapi/ وsql/ فترافق المستودع للاطّلاع على الكود ولا
+# تعمل هنا لأن GitHub Pages لا تشغّل PHP.
+
+name: نشر الصفحة التجريبية
+
+on:
+  push:
+    branches: [main]
+  # يسمح بتشغيل النشر يدوياً من تبويب Actions
+  workflow_dispatch:
+
+# الصلاحيات التي يحتاجها النشر، لا أكثر
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# نشر واحد في كل مرة: الدفعات المتتابعة لا تتسابق على الموقع
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: جلب الملفات
+        uses: actions/checkout@v4
+
+      - name: تهيئة Pages
+        uses: actions/configure-pages@v5
+
+      - name: رفع الموقع كما هو
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - name: النشر
+        id: deployment
+        uses: actions/deploy-pages@v4
