@@ -581,5 +581,6 @@ var DEMO_SEED = {
         "track": 9,
         "platform": 11,
         "cohort": 3
-    }
+    },
+    "version": "12c8603bcafa"
 };

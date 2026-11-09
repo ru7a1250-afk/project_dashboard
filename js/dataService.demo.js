@@ -102,7 +102,17 @@ var DataService = (function () {
       if (raw) db = JSON.parse(raw);
     } catch (e) { /* تخزين معطّل أو بيانات تالفة */ }
 
-    if (!db || !db.projects) db = seed();
+    /*
+       البصمة تحسم التعارض: حين تُنشر بيانات جديدة تختلف بصمتها عمّا
+       في متصفح الزائر، تُعتمد المنشورة. بدون ذلك يبقى كل زائر سابق
+       يرى النسخة التي حُفظت عنده أول مرة مهما حُدّث الموقع.
+    */
+    if (db && db.version !== DEMO_SEED.version) db = null;
+
+    if (!db || !db.projects) {
+      db = seed();
+      save();
+    }
 
     return db;
   }
