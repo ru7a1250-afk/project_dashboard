@@ -49,79 +49,9 @@ var DataService = (function () {
 
   /* ------------------------- البيانات الأوّلية ------------------------- */
 
+  /* البيانات الأوّلية من demo-seed.js المُولَّد من قاعدة البيانات */
   function seed() {
-    return {
-      platforms: [
-        { id: "pf_1", name: "منصة التدريب الأولى",  shortName: "الأولى",  color: "#4f46e5", active: true },
-        { id: "pf_2", name: "أكاديمية التقنية",     shortName: "التقنية", color: "#0ea5e9", active: true },
-        { id: "pf_3", name: "معهد المهارات الرقمية", shortName: "المهارات", color: "#10b981", active: true }
-      ],
-
-      cohorts: [
-        { id: "c_1", name: "الدفعة الأولى 2026", platformId: "pf_1", startsAt: null, endsAt: null, active: true },
-        { id: "c_2", name: "الدفعة الثانية 2026", platformId: "pf_2", startsAt: null, endsAt: null, active: true }
-      ],
-
-      tracks: [
-        { id: "FrontEnd",      label: "واجهات أمامية",      color: "#4f46e5", sort: 1, active: true,
-          skills: ["HTML", "CSS", "JavaScript", "React", "UI/UX"] },
-        { id: "Backend",       label: "تطوير الواجهات الخلفية", color: "#0ea5e9", sort: 2, active: true,
-          skills: ["PHP", "SQL", "APIs", "الأمان", "الأداء"] },
-        { id: "FullStack",     label: "تطوير متكامل",        color: "#8b5cf6", sort: 3, active: true,
-          skills: ["HTML", "CSS", "JavaScript", "PHP", "SQL"] },
-        { id: "UI_UX",         label: "تصميم تجربة المستخدم", color: "#ec4899", sort: 4, active: true,
-          skills: ["البحث", "النماذج الأولية", "التصميم البصري", "الوصولية", "Figma"] },
-        { id: "DataScience",   label: "علم البيانات",        color: "#f59e0b", sort: 5, active: true,
-          skills: ["Python", "SQL", "الإحصاء", "تصور البيانات", "تعلّم الآلة"] },
-        { id: "Cybersecurity", label: "الأمن السيبراني",     color: "#ef4444", sort: 6, active: true,
-          skills: ["الشبكات", "التشفير", "اختبار الاختراق", "تحليل الثغرات", "أمن التطبيقات"] },
-        { id: "GameDev",       label: "تطوير الألعاب",       color: "#f3c316", sort: 7, active: true,
-          skills: ["Unity", "C#", "الرسوميات والتحريك", "فيزياء الألعاب", "تصميم المراحل"] }
-      ],
-
-      trainees: [
-        mkTrainee("t_1", "متدربة تجريبية ١", "UI_UX", "تصميم تجربة المستخدم", "c_1", "pf_1",
-          { "البحث": 88, "النماذج الأولية": 92, "التصميم البصري": 95, "الوصولية": 80, "Figma": 90 },
-          true, "2026-03-10"),
-        mkTrainee("t_2", "متدرب تجريبي ٢", "FrontEnd", "واجهات أمامية", "c_1", "pf_1",
-          { "HTML": 95, "CSS": 90, "JavaScript": 85, "React": 70, "UI/UX": 75 },
-          true, "2026-03-10"),
-        mkTrainee("t_3", "متدربة تجريبية ٣", "FullStack", "تطوير متكامل", "c_2", "pf_2",
-          { "HTML": 80, "CSS": 75, "JavaScript": 88, "PHP": 92, "SQL": 85 },
-          false, null),
-        mkTrainee("t_4", "متدرب تجريبي ٤", "DataScience", "علم البيانات", "c_2", "pf_2",
-          { "Python": 90, "SQL": 78, "الإحصاء": 72, "تصور البيانات": 85, "تعلّم الآلة": 65 },
-          false, null),
-        mkTrainee("t_5", "متدربة تجريبية ٥", "Cybersecurity", "الأمن السيبراني", "c_1", "pf_3",
-          { "الشبكات": 70, "التشفير": 65, "اختبار الاختراق": 60, "تحليل الثغرات": 68, "أمن التطبيقات": 72 },
-          false, null)
-      ],
-
-      projects: [
-        mkProject("p_1", "منصة حجوزات ذكية", "t_1", "approved", "UI_UX", 100, "2026-10-15",
-          "تصميم تجربة حجز كاملة من البحث حتى التأكيد.", 96,
-          "عمل متميّز: التسلسل البصري واضح والوصولية مراعاة.", "pf_1"),
-        mkProject("p_2", "تطبيق الخدمات المجتمعية", "t_2", "under_review", "FrontEnd", 70, futureDate(14),
-          "تطبيق لربط المستفيدين بالجهات الخيرية وتنظيم الطلبات.", null, "", "pf_1"),
-        mkProject("p_3", "مساعد ذكي للمتدربين", "t_2", "approved", "FrontEnd", 100, "2026-09-30",
-          "واجهة محادثة تجيب عن أسئلة المعسكر.", 93,
-          "بنية المكوّنات ممتازة، ويُنصح بتحسين معالجة الأخطاء.", "pf_1"),
-        mkProject("p_4", "بوابة الدفع الموحّدة", "t_3", "needs_revision", "FullStack", 45, futureDate(30),
-          "ربط بوابات دفع متعددة بواجهة واحدة.", null,
-          "يحتاج إعادة هيكلة طبقة الاتصال وتغطية اختبارية.", "pf_2"),
-        mkProject("p_5", "لوحة تحليلات المعسكر", "t_4", "under_review", "DataScience", 60, futureDate(21),
-          "لوحة مؤشرات لمتابعة أداء الدفعات.", null, "", "pf_2"),
-        mkProject("p_6", "فحص أمني آلي", "t_5", "under_review", "Cybersecurity", 35, pastDate(6),
-          "أداة تفحص التطبيقات وترصد الثغرات الشائعة.", null, "", "pf_3")
-      ],
-
-      settings: {
-        platform_name: "منصة إدارة معسكرات البرمجة",
-        default_bootcamp: "الدفعة الأولى 2026"
-      },
-
-      seq: { trainee: 5, project: 6, track: 7, platform: 3, cohort: 2 }
-    };
+    return JSON.parse(JSON.stringify(DEMO_SEED));
   }
 
   function mkTrainee(id, name, track, trackLabel, cohortId, platformId, skills, certified, certifiedAt) {
@@ -157,8 +87,6 @@ var DataService = (function () {
     d.setDate(d.getDate() + days);
     return d.toISOString().slice(0, 10);
   }
-  function futureDate(n) { return shiftDate(n); }
-  function pastDate(n) { return shiftDate(-n); }
 
   function today() { return shiftDate(0); }
 
