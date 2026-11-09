@@ -258,7 +258,7 @@ function mapProject(array $row, array $platforms = [], array $trackLabels = []):
 
         /* حقول مشتقّة تعتمد عليها الواجهة */
         'title'       => $row['project_name'],
-        'domStatus'   => STATUS_TO_DOM[$status] ?? $status,
+        /* لم يعد هناك حقل domStatus: الواجهة تستخدم المفردات نفسها */
         'trackLabel'  => $trackLabels[$row['track']] ?? $row['track'],
         'platformId'    => $row['platform_id'] ?? null,
         'platformName'  => $pf['name'] ?? '',

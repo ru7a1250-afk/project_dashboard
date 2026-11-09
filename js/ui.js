@@ -7,6 +7,14 @@
 var UI = (function () {
   "use strict";
 
+  /*
+     ثابت محلي عمداً: هذه الطبقة لا تستورد DataService حتى يبقى
+     العرض مستقلاً عن مصدر البيانات. القيمة نفسها في المفردتين.
+  */
+  var APPROVED = "approved";
+  var UNDER_REVIEW = "under_review";
+  var NEEDS_REVISION = "needs_revision";
+
   /* ------------------------- 1. مراجع الـ DOM ------------------------- */
 
   var el = {
@@ -22,15 +30,15 @@ var UI = (function () {
     statCertified:  document.getElementById("statCertified"),
 
     columns: {
-      review:   document.getElementById("col-review"),
+      under_review:   document.getElementById("col-review"),
       approved: document.getElementById("col-approved"),
-      rework:   document.getElementById("col-rework")
+      needs_revision:   document.getElementById("col-rework")
     },
 
     counts: {
-      review:   document.getElementById("countReview"),
+      under_review:   document.getElementById("countReview"),
       approved: document.getElementById("countApproved"),
-      rework:   document.getElementById("countRework")
+      needs_revision:   document.getElementById("countRework")
     },
 
     skillsModal:    document.getElementById("skillsModal"),
@@ -99,15 +107,15 @@ var UI = (function () {
   };
 
   var STATUS_LABELS = {
-    review:   "تحت التقييم",
+    under_review:   "تحت التقييم",
     approved: "مُجاز",
-    rework:   "يحتاج تعديل"
+    needs_revision:   "يحتاج تعديل"
   };
 
   var STATUS_ICONS = {
-    review:   "fa-hourglass-half",
+    under_review:   "fa-hourglass-half",
     approved: "fa-circle-check",
-    rework:   "fa-pen-ruler"
+    needs_revision:   "fa-pen-ruler"
   };
 
   var TRACK_LABELS = {
@@ -232,10 +240,12 @@ var UI = (function () {
     return p.updatedAt || p.createdAt || p.submittedAt || p.dueDate || "";
   }
 
-  /* الحالة بمفردات الـ DOM/CSS — طبقة البيانات تعتمد under_review/needs_revision */
-  function domStatus(p) {
-    return p.domStatus || p.status;
-  }
+  /*
+     لم تعد هناك مفردتان: الواجهة وقاعدة البيانات تستخدمان الآن
+     approved / under_review / needs_revision نفسها، فحُذفت الدالة
+     التي كانت تترجم بينهما (domStatus) — وكانت مصدر خطأ أفشل
+     حفظ تعديل المشاريع بصمت.
+  */
 
   function trackLabel(trainee) {
     return trainee.trackLabel || TRACK_LABELS[trainee.track] || "—";
@@ -268,7 +278,7 @@ var UI = (function () {
     }
 
     var done = own.filter(function (p) {
-      return domStatus(p) === "approved";
+      return p.status === APPROVED;
     }).length;
 
     return Math.round((done / own.length) * 100);
@@ -281,7 +291,7 @@ var UI = (function () {
    * @returns {Object} { state: ok|soon|late, days }
    */
   function dueState(p) {
-    if (!p.dueDate || domStatus(p) === "approved") {
+    if (!p.dueDate || p.status === APPROVED) {
       return { state: "ok", days: 0 };
     }
 
@@ -312,7 +322,7 @@ var UI = (function () {
   function progressRow(p) {
     var pct = (typeof p.progress === "number")
       ? p.progress
-      : (domStatus(p) === "approved" ? 100 : 0);
+      : (p.status === APPROVED ? 100 : 0);
 
     var d = dueState(p);
 
@@ -453,10 +463,10 @@ var UI = (function () {
       if (el.columns[key]) el.columns[key].innerHTML = "";
     });
 
-    var buckets = { review: 0, approved: 0, rework: 0 };
+    var buckets = { under_review: 0, approved: 0, needs_revision: 0 };
 
     list.forEach(function (p) {
-      var key = domStatus(p);
+      var key = p.status;
       var column = el.columns[key];
       if (!column) return;
 
@@ -483,7 +493,7 @@ var UI = (function () {
     var card = document.createElement("article");
     card.className = "task-card";
     card.dataset.projectId = p.id;
-    card.dataset.status = domStatus(p);
+    card.dataset.status = p.status;
     card.dataset.traineeId = p.traineeId;
     card.dataset.track = p.track || "";
     card.dataset.due = dueState(p).state;
@@ -491,11 +501,11 @@ var UI = (function () {
 
     var name = (trainee && trainee.name) || p.traineeName || "غير محدّد";
     var avatar = (trainee && trainee.avatar) || (p.traineeName ? avatarFor(p.traineeName) : "");
-    var statusLabel = STATUS_LABELS[domStatus(p)] || p.status;
-    var statusIcon = STATUS_ICONS[domStatus(p)] || "fa-circle";
+    var statusLabel = STATUS_LABELS[p.status] || p.status;
+    var statusIcon = STATUS_ICONS[p.status] || "fa-circle";
 
-    var tagClass = domStatus(p) === "approved" ? "tag-success"
-                 : domStatus(p) === "rework"   ? "tag-danger"
+    var tagClass = p.status === APPROVED ? "tag-success"
+                 : p.status === NEEDS_REVISION ? "tag-danger"
                  : "tag-web";
 
     var scoreHtml = (typeof p.score === "number")
@@ -781,13 +791,13 @@ var UI = (function () {
     var points = 0;
 
     own.forEach(function (p) {
-      var key = domStatus(p);
+      var key = p.status;
       if (tally[key] === undefined) return;
 
       tally[key]++;
       points += POINTS[key];
 
-      if (p.status === "approved" && typeof p.score === "number") {
+      if (p.status === APPROVED && typeof p.score === "number") {
         points += p.score * POINTS.scoreBonus;
       }
     });
@@ -1065,13 +1075,13 @@ var UI = (function () {
     var doneCount = 0;
 
     own.forEach(function (p, index) {
-      var meta = NODE_STATES[domStatus(p)] || NODE_STATES.review;
-      if (p.status === "approved") doneCount++;
+      var meta = NODE_STATES[p.status] || NODE_STATES.review;
+      if (p.status === APPROVED) doneCount++;
 
       var li = document.createElement("li");
       li.className = "journey-node " + meta.cls;
       li.dataset.projectId = p.id;
-      li.dataset.status = domStatus(p);
+      li.dataset.status = p.status;
 
       var scoreHtml = (typeof p.score === "number")
         ? ' · <strong>' + p.score + '٪</strong>'
@@ -1399,10 +1409,8 @@ var UI = (function () {
     form.elements.title.value = project.title || "";
     form.elements.description.value = project.description || "";
     if (form.elements.feedback) form.elements.feedback.value = project.feedback || "";
-    /* القائمة تستخدم مفردات الواجهة (review/rework/approved) لا المفردات
-       المعيارية (under_review/needs_revision)، فنحوّل قبل الإسناد وإلا بقيت
-       القيمة فارغة ورفض الخادم التعديل بالكامل. */
-    form.elements.status.value = domStatus(project) || "review";
+    /* القائمة وقاعدة البيانات تستخدمان المفردات نفسها الآن */
+    form.elements.status.value = project.status || UNDER_REVIEW;
     if (form.elements.platformId) form.elements.platformId.value = project.platformId || "";
     if (form.elements.dueDate) form.elements.dueDate.value = project.dueDate || "";
     form.elements.score.value =
@@ -1769,6 +1777,52 @@ var UI = (function () {
     });
   }
 
+  var pendingSkillsEdit = null;
+
+  /**
+   * نافذة تعديل مهارات مسار — بديل prompt الافتراضي.
+   * @param {Object} options - { trackLabel, skills }
+   * @returns {Promise<string|null>} النص المُدخل، أو null عند الإلغاء
+   */
+  function editSkillsPrompt(options) {
+    var opts = options || {};
+
+    var label = document.getElementById("skillsEditTrack");
+    var input = document.getElementById("skillsEditInput");
+
+    if (label) label.textContent = opts.trackLabel || "";
+
+    /* سطر لكل مهارة أوضح للقراءة والتحرير من سطر واحد طويل */
+    if (input) input.value = (opts.skills || []).join("\n");
+
+    openModal("skillsEditModal");
+
+    if (input) {
+      afterPaint(function () {
+        input.focus();
+        input.setSelectionRange(input.value.length, input.value.length);
+      });
+    }
+
+    return new Promise(function (resolve) {
+      if (pendingSkillsEdit) pendingSkillsEdit(null);
+      pendingSkillsEdit = resolve;
+    });
+  }
+
+  /** حسم نافذة المهارات — النص عند الحفظ، أو null عند الإلغاء */
+  function resolveSkillsEdit(save) {
+    closeModal("skillsEditModal");
+
+    if (!pendingSkillsEdit) return;
+
+    var input = document.getElementById("skillsEditInput");
+    var resolve = pendingSkillsEdit;
+
+    pendingSkillsEdit = null;
+    resolve(save ? (input ? input.value : "") : null);
+  }
+
   /** حسم التأكيد المعلّق — يستدعيها المتحكّم عند الموافقة أو الإلغاء */
   function resolveConfirm(accepted) {
     closeModal("confirmModal");
@@ -1816,7 +1870,7 @@ var UI = (function () {
     }
 
     set(el.statProjects,  pick("total", "projects"));
-    set(el.statApproved,  pick("approved"));
+    set(el.statApproved,  pick(APPROVED));
     set(el.statReview,    pick("underReview", "review"));
     set(el.statRework,    pick("needsRevision", "rework"));
     set(el.statCertified, pick("certified"));
@@ -1933,6 +1987,8 @@ var UI = (function () {
     fillProjectForm: fillProjectForm,
     confirmAction: confirmAction,
     resolveConfirm: resolveConfirm,
+    editSkillsPrompt: editSkillsPrompt,
+    resolveSkillsEdit: resolveSkillsEdit,
     fillSkillsHeader: fillSkillsHeader,
     fillCertificate: fillCertificate,
     updateColumnCounts: updateColumnCounts,

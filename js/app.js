@@ -8,6 +8,15 @@
 (function () {
   "use strict";
 
+  /*
+     حالة الإجازة كُتبت نصّاً حرفياً في تسعة مواضع، وخطأ إملائي واحد
+     فيها يُنتج خللاً صامتاً لا يرصده المترجم. المصدر الآن واحد.
+     القيمة نفسها في مفردات قاعدة البيانات ومفردات الواجهة.
+  */
+  var APPROVED = DataService.STATUSES.APPROVED;
+  var UNDER_REVIEW = DataService.STATUSES.UNDER_REVIEW;
+  var NEEDS_REVISION = DataService.STATUSES.NEEDS_REVISION;
+
   /* ------------------------- 1. حالة التطبيق ------------------------- */
 
   var state = {
@@ -85,7 +94,7 @@
   function averageScore(traineeId) {
     var scored = state.projects.filter(function (p) {
       return p.traineeId === traineeId &&
-             p.status === "approved" &&
+             p.status === APPROVED &&
              typeof p.score === "number";
     });
 
@@ -161,7 +170,7 @@
 
     return {
       total: projects.length,
-      approved: countBy("approved"),
+      approved: countBy(APPROVED),
       underReview: countBy("under_review"),
       needsRevision: countBy("needs_revision"),
       late: projects.filter(function (p) { return UI.dueState(p).state === "late"; }).length,
@@ -250,7 +259,16 @@
       return;
     }
 
-    if (grid) grid.hidden = true;
+    /*
+       الشبكة تُفرَّغ عند مغادرتها: renderGrid ينقل البطاقات إليها نقلاً،
+       فتركها مخفية يُبقي نسخاً قديمة لا تتحدث، وتتكرر معها معرّفات
+       المشاريع في الصفحة.
+    */
+    if (grid) {
+      grid.innerHTML = "";
+      grid.hidden = true;
+    }
+
     if (board) board.hidden = false;
 
     UI.renderProjects(projects, state.trainees);
@@ -412,7 +430,7 @@
     }
   ];
 
-  function isApproved(p) { return p.status === "approved"; }
+  function isApproved(p) { return p.status === APPROVED; }
 
   /**
    * فحص شارات متدرب ومنح الجديد منها.
@@ -558,7 +576,7 @@
     if (!projectId || !newStatus) return;
 
     var sameColumn = newStatus === oldStatus;
-    var becameApproved = !sameColumn && newStatus === "approved";
+    var becameApproved = !sameColumn && newStatus === APPROVED;
 
     /* تحديث فوري للواجهة (تفاؤلي) قبل وصول رد "الـ API" */
     card.dataset.status = newStatus;
@@ -573,8 +591,8 @@
           UI.showToast(
             '"' + (updated.projectName || updated.title) + '" → ' +
             DataService.STATUS_LABELS[DataService.normalizeStatus(newStatus)],
-            newStatus === "approved" ? "success"
-              : newStatus === "rework" ? "warning" : "info"
+            newStatus === APPROVED ? "success"
+              : newStatus === NEEDS_REVISION ? "warning" : "info"
           );
         }
 
@@ -848,7 +866,7 @@
 
     /* الحالة والدرجة تُحفظان معاً في التخزين */
     DataService.updateProject(projectId, {
-      status: "approved",
+      status: APPROVED,
       score: score,
       feedback: state.aiResult.feedback || ""
     })
@@ -908,7 +926,7 @@
     if (!trainee) return;
 
     var approved = state.projects.filter(function (p) {
-      return p.traineeId === traineeId && p.status === "approved";
+      return p.traineeId === traineeId && p.status === APPROVED;
     });
 
     if (!approved.length) {
@@ -1054,7 +1072,7 @@
       var card = e.target.closest(".task-card");
       if (!card) return;
 
-      if (card.dataset.status !== "review") {
+      if (card.dataset.status !== UNDER_REVIEW) {
         UI.showToast("المُقيّم الذكي يعمل على المشاريع تحت التقييم فقط.", "info");
         return;
       }
@@ -1181,6 +1199,12 @@
     var confirmBtn = document.getElementById("confirmAcceptBtn");
     if (confirmBtn) {
       confirmBtn.addEventListener("click", function () { UI.resolveConfirm(true); });
+    }
+
+    /* --- نافذة تعديل المهارات --- */
+    var skillsSaveBtn = document.getElementById("skillsEditSaveBtn");
+    if (skillsSaveBtn) {
+      skillsSaveBtn.addEventListener("click", function () { UI.resolveSkillsEdit(true); });
     }
 
     /* --- إعادة البيانات الافتراضية --- */
@@ -1353,23 +1377,41 @@
 
     if (!track) return;
 
-    var current = (track.skills || []).join("، ");
-    var answer = window.prompt(
-      'مهارات مسار "' + track.label + '" مفصولة بفاصلة:',
-      current
-    );
+    UI.editSkillsPrompt({ trackLabel: track.label, skills: track.skills || [] })
+      .then(function (answer) {
+        /* الإلغاء يعيد null — لا تغيير */
+        if (answer === null) return null;
 
-    /* إلغاء المربّع يعيد null — لا تغيير */
-    if (answer === null) return;
+        var skills = parseSkillList(answer);
 
-    var skills = parseSkillList(answer);
+        if (skills.length) return skills;
 
-    if (!skills.length &&
-        !window.confirm("لم تُدخل أي مهارة. سيضع النظام مهارات عامة. أتريد المتابعة؟")) {
-      return;
-    }
+        /* الحفظ بلا مهارات يضع المجموعة العامة — يستحق تأكيداً */
+        return UI.confirmAction({
+          message: "لم تُدخل أي مهارة.",
+          detail: "سيضع النظام مهارات عامة لهذا المسار. أتريد المتابعة؟",
+          label: "نعم، ضع مهارات عامة",
+          icon: "fa-sliders"
+        }).then(function (ok) {
+          return ok ? [] : null;
+        });
+      })
+      .then(function (skills) {
+        if (skills === null) return null;
+        return saveTrackSkills(track, skills);
+      })
+      .catch(function (err) {
+        UI.showToast("تعذّر تحديث المهارات: " + err.message, "danger");
+      });
+  }
 
-    DataService.setTrackSkills(trackId, skills)
+  /**
+   * حفظ مهارات المسار وتحديث كل ما يعتمد عليها.
+   * @param {Object} track - سجل المسار في الحالة
+   * @param {string[]} skills
+   */
+  function saveTrackSkills(track, skills) {
+    return DataService.setTrackSkills(track.id, skills)
       .then(function (updated) {
         track.skills = updated.skills || [];
 
@@ -1530,6 +1572,7 @@
     if (id === "skillsModal") closeSkills();
     else if (id === "aiReviewModal") closeAIReview();
     else if (id === "confirmModal") UI.resolveConfirm(false);
+    else if (id === "skillsEditModal") UI.resolveSkillsEdit(false);
     else if (id === "addTraineeModal") {
       state.editingTraineeId = null;
       UI.closeFormModal(id, "addTraineeForm");
@@ -1738,7 +1781,7 @@
 
         if (editingId) {
           var local = findProject(editingId);
-          wasApproved = local && local.status === "approved";
+          wasApproved = local && local.status === APPROVED;
 
           if (local) {
             Object.keys(project).forEach(function (key) {
@@ -1760,7 +1803,7 @@
         state.editingProjectId = null;
 
         /* أصبح مُجازاً الآن ولم يكن كذلك → احتفال وشارات */
-        if (project.status === "approved" && !wasApproved) {
+        if (project.status === APPROVED && !wasApproved) {
           fireConfetti(0.7);
           awardBadges(project.traineeId);
         }

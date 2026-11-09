@@ -228,9 +228,9 @@ function asset(string $path): string {
             <i class="fa-solid fa-filter" aria-hidden="true"></i>
             <select id="filterStatus" class="select-control">
               <option value="all">كل الحالات</option>
-              <option value="review">تحت التقييم</option>
+              <option value="under_review">تحت التقييم</option>
               <option value="approved">مُجاز</option>
-              <option value="rework">يحتاج تعديل</option>
+              <option value="needs_revision">يحتاج تعديل</option>
               <option value="late">⏰ المتأخرة</option>
             </select>
           </div>
@@ -268,7 +268,7 @@ function asset(string $path): string {
       <section class="kanban-board" id="kanbanBoard" aria-label="لوحة كانبان لتقييم المشاريع">
 
         <!-- العمود الأول: تحت التقييم -->
-        <article class="kanban-column" data-status="review">
+        <article class="kanban-column" data-status="under_review">
           <header class="column-header column-review">
             <h3 class="column-title">
               <i class="fa-solid fa-hourglass-half" aria-hidden="true"></i>
@@ -277,7 +277,7 @@ function asset(string $path): string {
             <span class="badge column-count" id="countReview">0</span>
           </header>
           <!-- حاوية SortableJS -->
-          <div class="kanban-list sortable-list" id="col-review" data-status="review"></div>
+          <div class="kanban-list sortable-list" id="col-review" data-status="under_review"></div>
         </article>
 
         <!-- العمود الثاني: مُجاز -->
@@ -294,7 +294,7 @@ function asset(string $path): string {
         </article>
 
         <!-- العمود الثالث: يحتاج تعديل -->
-        <article class="kanban-column" data-status="rework">
+        <article class="kanban-column" data-status="needs_revision">
           <header class="column-header column-rework">
             <h3 class="column-title">
               <i class="fa-solid fa-pen-ruler" aria-hidden="true"></i>
@@ -303,7 +303,7 @@ function asset(string $path): string {
             <span class="badge column-count" id="countRework">0</span>
           </header>
           <!-- حاوية SortableJS -->
-          <div class="kanban-list sortable-list" id="col-rework" data-status="rework"></div>
+          <div class="kanban-list sortable-list" id="col-rework" data-status="needs_revision"></div>
         </article>
 
       </section>
@@ -420,8 +420,8 @@ function asset(string $path): string {
             <div class="field">
               <label class="field-label" for="projectStatus">حالة التقييم</label>
               <select id="projectStatus" name="status" class="select-control">
-                <option value="review">تحت التقييم</option>
-                <option value="rework">يحتاج تعديل</option>
+                <option value="under_review">تحت التقييم</option>
+                <option value="needs_revision">يحتاج تعديل</option>
                 <option value="approved">مُجاز</option>
               </select>
             </div>
@@ -916,6 +916,45 @@ function asset(string $path): string {
   </div>
 
   <!-- ------------------- 5.7 نافذة التأكيد ------------------- -->
+  <!-- تعديل مهارات مسار — بديل مربّع prompt الافتراضي -->
+  <div class="modal-overlay" id="skillsEditModal" role="dialog" aria-modal="true"
+       aria-labelledby="skillsEditTitle" hidden>
+    <div class="modal modal-sm">
+      <header class="modal-header">
+        <h2 class="modal-title" id="skillsEditTitle">
+          <i class="fa-solid fa-sliders" aria-hidden="true"></i>
+          مهارات المسار
+        </h2>
+        <button type="button" class="btn btn-icon modal-close" data-close="skillsEditModal"
+                aria-label="إغلاق النافذة">
+          <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        </button>
+      </header>
+
+      <div class="modal-body">
+        <p class="confirm-message" id="skillsEditTrack">—</p>
+
+        <div class="field">
+          <label class="field-label" for="skillsEditInput">المهارات، كل مهارة في سطر أو مفصولة بفاصلة</label>
+          <textarea id="skillsEditInput" class="input-control" rows="6"
+                    placeholder="Unity&#10;C#&#10;فيزياء الألعاب"></textarea>
+          <p class="field-hint">تظهر كمزالج عند إضافة متدرب، ومستواها المبدئي ٥٠٪. إن تُركت فارغة وُضعت مهارات عامة.</p>
+        </div>
+      </div>
+
+      <footer class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-close="skillsEditModal">
+          <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+          إلغاء
+        </button>
+        <button type="button" class="btn btn-primary" id="skillsEditSaveBtn">
+          <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>
+          حفظ المهارات
+        </button>
+      </footer>
+    </div>
+  </div>
+
   <div class="modal-overlay" id="confirmModal" role="alertdialog" aria-modal="true"
        aria-labelledby="confirmTitle" hidden>
     <div class="modal modal-sm">

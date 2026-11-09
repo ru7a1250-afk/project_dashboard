@@ -480,9 +480,9 @@
   transition: background var(--t-fast);
 }
 
-.task-card[data-status="review"]::before   { background: var(--info); }
+.task-card[data-status="under_review"]::before   { background: var(--info); }
 .task-card[data-status="approved"]::before { background: var(--success); }
-.task-card[data-status="rework"]::before   { background: var(--warning); }
+.task-card[data-status="needs_revision"]::before   { background: var(--warning); }
 
 .task-head {
   display: flex;
