@@ -127,11 +127,15 @@
       ? DataService.normalizeTrack(state.trackFilter)
       : "all";
 
-    var lateOnly = state.statusFilter === "late";
+    var lateOnly   = state.statusFilter === "late";
+    var noLinkOnly = state.statusFilter === "nolink";
 
     return state.projects.filter(function (p) {
       if (lateOnly) {
         if (UI.dueState(p).state !== "late") return false;
+      } else if (noLinkOnly) {
+        /* المُجاز بلا رابط: سجل ناقص يُجمع ليُكمَّل */
+        if (p.status !== APPROVED || p.repoUrl) return false;
       } else if (status !== "all" && p.status !== status) {
         return false;
       }
@@ -579,27 +583,39 @@
     var becameApproved = !sameColumn && newStatus === APPROVED;
 
     /*
-       الإجازة تُلزم بالرابط. السحب نقل البطاقة فعلاً قبل وصولنا هنا،
-       فالرفض وحده يترك الواجهة مخالفة للبيانات — تُعاد البطاقة إلى
-       عمودها الأصلي في موضعها.
+       الإجازة بلا رابط تُنبّه ولا تُمنع. السحب نقل البطاقة فعلاً قبل
+       وصولنا هنا، فإن رفضت المستخدمة التنبيه وجب إرجاعها إلى عمودها
+       وموضعها، وإلا خالفت الواجهةُ البيانات.
     */
     if (becameApproved) {
       var dropped = findProject(projectId);
 
       if (dropped && !dropped.repoUrl) {
-        evt.from.insertBefore(card, evt.from.children[evt.oldDraggableIndex] || null);
-        card.dataset.status = oldStatus;
-        UI.updateColumnCounts();
+        var backIndex = evt.oldDraggableIndex;
 
-        UI.showToast(
-          'لا يمكن إجازة "' + dropped.projectName + '" بلا رابط — أضف رابط المشروع أولاً',
-          "warning"
-        );
+        confirmApprovalWithoutLink(APPROVED, "").then(function (go) {
+          if (go) {
+            commitDrop(card, projectId, newStatus, oldStatus, newOrder, becameApproved);
+            return;
+          }
 
-        openEditProject(projectId);
+          /* الرفض: السحب نقل البطاقة فعلاً، فتُعاد إلى موضعها */
+          evt.from.insertBefore(card, evt.from.children[backIndex] || null);
+          card.dataset.status = oldStatus;
+          UI.updateColumnCounts();
+          openEditProject(projectId);
+        });
+
         return;
       }
     }
+
+    commitDrop(card, projectId, newStatus, oldStatus, newOrder, becameApproved);
+  }
+
+  /** تثبيت نتيجة السحب في طبقة البيانات وتحديث الواجهة */
+  function commitDrop(card, projectId, newStatus, oldStatus, newOrder, becameApproved) {
+    var sameColumn = newStatus === oldStatus;
 
     /* تحديث فوري للواجهة (تفاؤلي) قبل وصول رد "الـ API" */
     card.dataset.status = newStatus;
@@ -887,17 +903,23 @@
     var project = findProject(projectId);
     if (!project) return;
 
-    /* اعتماد التقييم يُجيز المشروع، فتسري عليه قاعدة الرابط */
+    /* اعتماد التقييم يُجيز المشروع، فيسري عليه التنبيه نفسه */
     if (!project.repoUrl) {
-      UI.showToast(
-        "لا يمكن اعتماد التقييم بلا رابط المشروع — أضفه أولاً",
-        "warning"
-      );
-
       closeAIReview();
-      openEditProject(projectId);
+
+      confirmApprovalWithoutLink(APPROVED, "").then(function (go) {
+        if (go) applyAIResultNow(projectId, score);
+        else openEditProject(projectId);
+      });
+
       return;
     }
+
+    applyAIResultNow(projectId, score);
+  }
+
+  /** اعتماد نتيجة المُقيّم فعلياً بعد اجتياز التنبيهات */
+  function applyAIResultNow(projectId, score) {
 
     /* الحالة والدرجة تُحفظان معاً في التخزين */
     DataService.updateProject(projectId, {
@@ -1939,12 +1961,6 @@
       invalid = true;
     }
 
-    /* الإجازة وحدها تُلزم بالرابط: لا يُحكم على عمل لا يمكن فتحه */
-    if (data.status === APPROVED && !data.repoUrl) {
-      UI.setFieldError("projectRepoUrl", true);
-      UI.showToast("لا يمكن إجازة المشروع بلا رابط — أضف رابط المشروع أولاً", "warning");
-      invalid = true;
-    }
 
     if (invalid) {
       var firstInvalid = document.querySelector("#addProjectForm .is-invalid");
@@ -1955,6 +1971,29 @@
     var owner = findTrainee(data.traineeId);
     data.track = owner ? owner.track : "web";
 
+    /* تنبيه قابل للتجاوز: الإجازة بلا رابط تُسجَّل لكنها لا تمرّ بصمت */
+    confirmApprovalWithoutLink(data.status, data.repoUrl).then(function (go) {
+      if (go) saveProjectForm(data);
+    });
+  }
+
+  /**
+   * تنبيه الإجازة بلا رابط.
+   * @returns {Promise<boolean>} true للمتابعة
+   */
+  function confirmApprovalWithoutLink(status, repoUrl) {
+    if (status !== APPROVED || repoUrl) return Promise.resolve(true);
+
+    return UI.confirmAction({
+      message: "هذا المشروع بلا رابط.",
+      detail: "ستُجاز بلا ما يُثبتها، وستُعلَّم البطاقة بـ «بلا رابط» حتى تكمليها لاحقاً.",
+      label: "أجِز على أي حال",
+      icon: "fa-circle-check"
+    });
+  }
+
+  /** إرسال نموذج المشروع بعد اجتياز التحقق والتنبيهات */
+  function saveProjectForm(data) {
     var editingId = state.editingProjectId;
     UI.setFormBusy("addProjectForm", true);
 

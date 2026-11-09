@@ -536,6 +536,13 @@ var UI = (function () {
         ? '<img class="task-image" src="' + esc(p.image) + '" alt="صورة ' + esc(p.projectName || p.title || '') + '" loading="lazy" />'
         : '') +
       '<p class="task-desc">' + esc(p.description) + '</p>' +
+      /* مُجاز بلا رابط: نقص موثَّق على البطاقة بدل أن يمرّ بصمت */
+      (!p.repoUrl && p.status === APPROVED
+        ? '<p class="task-nolink" title="أُجيز دون رابط يُثبته">' +
+            '<i class="fa-solid fa-link-slash" aria-hidden="true"></i>' +
+            'مُجاز بلا رابط' +
+          '</p>'
+        : '') +
       /* rel=noopener يمنع الصفحة المفتوحة من التحكّم بصفحتنا */
       (p.repoUrl
         ? '<a class="task-link" href="' + esc(p.repoUrl) + '" target="_blank" rel="noopener noreferrer"' +

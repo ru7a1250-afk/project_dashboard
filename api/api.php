@@ -389,26 +389,12 @@ function cleanImage($value): string
     return $img;
 }
 
-/**
- * لا يُجاز مشروع بلا رابط.
- * الإجازة حكم على عمل، ولا يصح الحكم على ما لا يمكن فتحه. الرابط
- * اختياري في كل الحالات الأخرى لأن المشروع يُسجَّل عند انطلاقه قبل
- * أن يكون للمتدرب ما يرفعه.
- *
- * @param string $status      الحالة بعد التعديل
- * @param string $currentUrl  الرابط المحفوظ حالياً
- * @param mixed  $incomingUrl الرابط المُرسل في الطلب نفسه (إن وُجد)
- */
-function guardApproval(string $status, string $currentUrl, $incomingUrl = null): void
-{
-    if ($status !== 'approved') return;
-
-    $url = $incomingUrl === null ? $currentUrl : trim((string) $incomingUrl);
-
-    if ($url === '') {
-        fail('لا يمكن إجازة المشروع بلا رابط: أضف رابط المشروع أولاً');
-    }
-}
+/*
+   كان هنا منع صارم للإجازة بلا رابط. أُزيل عمداً: المنع دفع إلى
+   البحث عن روابط وهمية، والرابط الكاذب يبدو توثيقاً وليس كذلك —
+   وهو أسوأ من غيابه. صار التنبيه في الواجهة قابلاً للتجاوز، ومع
+   علامة ظاهرة على كل مشروع مُجاز بلا رابط حتى لا تختفي المسألة.
+*/
 
 /** اسم الدفعة من معرّفها، أو سلسلة فارغة إن لم توجد */
 function cohortNameOf(PDO $pdo, ?string $cohortId): string
@@ -565,9 +551,6 @@ try {
                 fail('مسار غير صالح: ' . ($input['track'] ?? ''));
             }
 
-            /* مشروع يُسجَّل مُجازاً مباشرةً يخضع للقاعدة نفسها */
-            guardApproval($status, '', $input['repoUrl'] ?? '');
-
             $defaultProgress = $status === 'approved' ? 100
                              : ($status === 'needs_revision' ? 40 : 60);
 
@@ -616,8 +599,6 @@ try {
             if (!$existing) {
                 fail('المشروع غير موجود: ' . $id);
             }
-
-            guardApproval($status, (string) ($existing['repoUrl'] ?? ''));
 
             /* المشروع المُجاز مكتمل بالضرورة */
             if ($status === 'approved') {
@@ -681,13 +662,6 @@ try {
                 if ($status === null) {
                     fail('حالة غير صالحة: ' . $changes['status']);
                 }
-                /* الرابط المُرسل في الطلب نفسه يُحتسب، فالحفظ واحد */
-                guardApproval(
-                    $status,
-                    (string) ($current['repoUrl'] ?? ''),
-                    array_key_exists('repoUrl', $changes) ? $changes['repoUrl'] : null
-                );
-
                 $sets[] = 'status = ?';
                 $params[] = $status;
 

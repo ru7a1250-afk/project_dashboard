@@ -232,6 +232,7 @@ function asset(string $path): string {
               <option value="approved">مُجاز</option>
               <option value="needs_revision">يحتاج تعديل</option>
               <option value="late">⏰ المتأخرة</option>
+              <option value="nolink">🔗 مُجازة بلا رابط</option>
             </select>
           </div>
 
