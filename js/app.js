@@ -578,6 +578,29 @@
     var sameColumn = newStatus === oldStatus;
     var becameApproved = !sameColumn && newStatus === APPROVED;
 
+    /*
+       الإجازة تُلزم بالرابط. السحب نقل البطاقة فعلاً قبل وصولنا هنا،
+       فالرفض وحده يترك الواجهة مخالفة للبيانات — تُعاد البطاقة إلى
+       عمودها الأصلي في موضعها.
+    */
+    if (becameApproved) {
+      var dropped = findProject(projectId);
+
+      if (dropped && !dropped.repoUrl) {
+        evt.from.insertBefore(card, evt.from.children[evt.oldDraggableIndex] || null);
+        card.dataset.status = oldStatus;
+        UI.updateColumnCounts();
+
+        UI.showToast(
+          'لا يمكن إجازة "' + dropped.projectName + '" بلا رابط — أضف رابط المشروع أولاً',
+          "warning"
+        );
+
+        openEditProject(projectId);
+        return;
+      }
+    }
+
     /* تحديث فوري للواجهة (تفاؤلي) قبل وصول رد "الـ API" */
     card.dataset.status = newStatus;
     UI.updateColumnCounts();
@@ -863,6 +886,18 @@
     var score = state.aiResult.score;
     var project = findProject(projectId);
     if (!project) return;
+
+    /* اعتماد التقييم يُجيز المشروع، فتسري عليه قاعدة الرابط */
+    if (!project.repoUrl) {
+      UI.showToast(
+        "لا يمكن اعتماد التقييم بلا رابط المشروع — أضفه أولاً",
+        "warning"
+      );
+
+      closeAIReview();
+      openEditProject(projectId);
+      return;
+    }
 
     /* الحالة والدرجة تُحفظان معاً في التخزين */
     DataService.updateProject(projectId, {
@@ -1901,6 +1936,13 @@
     /* الرابط اختياري، لكنه إن وُجد فلا يُقبل إلا http/https */
     if (data.repoUrl && !/^https?:\/\/.+/i.test(data.repoUrl)) {
       UI.setFieldError("projectRepoUrl", true);
+      invalid = true;
+    }
+
+    /* الإجازة وحدها تُلزم بالرابط: لا يُحكم على عمل لا يمكن فتحه */
+    if (data.status === APPROVED && !data.repoUrl) {
+      UI.setFieldError("projectRepoUrl", true);
+      UI.showToast("لا يمكن إجازة المشروع بلا رابط — أضف رابط المشروع أولاً", "warning");
       invalid = true;
     }
 

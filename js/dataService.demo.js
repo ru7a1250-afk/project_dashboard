@@ -287,6 +287,10 @@ var DataService = (function () {
     var owner = byId(db.trainees, d.traineeId);
     var status = normalizeStatus(d.status) || STATUSES.UNDER_REVIEW;
 
+    if (status === STATUSES.APPROVED && !String(d.repoUrl || "").trim()) {
+      return err("لا يمكن إجازة المشروع بلا رابط: أضف رابط المشروع أولاً");
+    }
+
     var p = mkProject(
       nextId("project", "p_"), title, d.traineeId, status,
       d.track || (owner ? owner.track : "FrontEnd"),
@@ -334,6 +338,14 @@ var DataService = (function () {
     if (c.status !== undefined) {
       var s = normalizeStatus(c.status);
       if (!s) return err("حالة غير صالحة: " + c.status);
+
+      /* القاعدة نفسها في الخادم: لا إجازة بلا رابط */
+      var urlAfter = c.repoUrl !== undefined ? String(c.repoUrl).trim() : p.repoUrl;
+
+      if (s === STATUSES.APPROVED && !urlAfter) {
+        return err("لا يمكن إجازة المشروع بلا رابط: أضف رابط المشروع أولاً");
+      }
+
       p.status = s;
       if (s === STATUSES.APPROVED && p.progress < 100) p.progress = 100;
     }

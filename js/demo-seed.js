@@ -309,6 +309,12 @@ var DEMO_SEED = {
                     "title": "خرّيج المعسكر 🎓",
                     "icon": "fa-graduation-cap",
                     "earnedAt": "2026-09-25"
+                },
+                {
+                    "id": "triple-threat",
+                    "title": "ثلاثية الإتقان ⚡",
+                    "icon": "fa-bolt",
+                    "earnedAt": "2026-11-09"
                 }
             ]
         },
@@ -577,7 +583,7 @@ var DEMO_SEED = {
             "feedback": "",
             "score": null,
             "createdAt": "2026-09-25",
-            "updatedAt": "2026-09-26",
+            "updatedAt": "2026-11-09",
             "platformId": "pf_2",
             "platformName": "",
             "platformShort": "",
@@ -595,5 +601,5 @@ var DEMO_SEED = {
         "platform": 11,
         "cohort": 3
     },
-    "version": "4fd4ee35a065"
+    "version": "d9fdbab6cbfd"
 };
