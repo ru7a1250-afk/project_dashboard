@@ -533,7 +533,7 @@
         dragClass: "sortable-drag",
         draggable: ".task-card",
         /* الأزرار داخل البطاقة لا تبدأ سحباً، وإلا ابتلع السحبُ نقرتها */
-        filter: ".empty-state, .task-actions, .task-actions *",
+        filter: ".empty-state, .task-actions, .task-actions *, .task-link, .task-link *",
         preventOnFilter: false,
         forceFallback: false,
         fallbackOnBody: true,
@@ -1276,6 +1276,7 @@
 
     /* مزامنة قيم أشرطة المهارات مع مخرجاتها */
     UI.bindRangeOutputs("addTraineeForm");
+    bindImageDropzone();
 
     /* إخفاء رسالة الخطأ بمجرد أن يبدأ المستخدم بالكتابة */
     document.addEventListener("input", function (e) {
@@ -1344,6 +1345,141 @@
   }
 
   /* --- إضافة مسار تدريبي --- */
+
+  /* ------------------- صورة المشروع: اختيار وضغط ------------------- */
+
+  var IMAGE_MAX_BYTES = 5 * 1024 * 1024;   /* حد الملف المرفوع */
+  var IMAGE_MAX_SIDE  = 1200;              /* أطول ضلع بعد الضغط */
+
+  /**
+   * قراءة ملف صورة وضغطه إلى data URL.
+   * الضغط ضروري: الصورة تُخزَّن داخل قاعدة البيانات، وملف 5MB خام
+   * يتضخّم ثلثاً عند ترميزه ويبطئ كل استعلام للمشاريع.
+   * @param {File} file
+   * @returns {Promise<string>} data URL
+   */
+  function readImageFile(file) {
+    return new Promise(function (resolve, reject) {
+      if (!file) return reject(new Error("لم يُختر ملف"));
+
+      if (file.size > IMAGE_MAX_BYTES) {
+        return reject(new Error("حجم الصورة يتجاوز 5 ميغابايت"));
+      }
+
+      if (file.type.indexOf("image/") !== 0) {
+        return reject(new Error("الملف ليس صورة"));
+      }
+
+      var reader = new FileReader();
+
+      reader.onerror = function () { reject(new Error("تعذّرت قراءة الملف")); };
+
+      reader.onload = function () {
+        var img = new Image();
+
+        img.onerror = function () { reject(new Error("تعذّر فتح الصورة")); };
+
+        img.onload = function () {
+          var scale = Math.min(1, IMAGE_MAX_SIDE / Math.max(img.width, img.height));
+          var w = Math.max(1, Math.round(img.width * scale));
+          var h = Math.max(1, Math.round(img.height * scale));
+
+          var canvas = document.createElement("canvas");
+          canvas.width = w;
+          canvas.height = h;
+          canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+
+          try {
+            /* PNG يحفظ الشفافية، وغيره يُحوّل إلى JPEG أخفّ بكثير */
+            var out = file.type === "image/png"
+              ? canvas.toDataURL("image/png")
+              : canvas.toDataURL("image/jpeg", 0.82);
+
+            resolve(out);
+          } catch (err) {
+            reject(new Error("تعذّر ضغط الصورة"));
+          }
+        };
+
+        img.src = reader.result;
+      };
+
+      reader.readAsDataURL(file);
+    });
+  }
+
+  /** معالجة ملف اختير بالنقر أو بالسحب */
+  function handleImageFile(file) {
+    UI.setFieldError("projectImage", false);
+
+    readImageFile(file)
+      .then(function (dataUrl) {
+        UI.setProjectImage(dataUrl, file.name);
+      })
+      .catch(function (err) {
+        UI.setProjectImage("", "");
+        UI.showToast(err.message, "warning");
+      });
+  }
+
+  /** ربط منطقة الإفلات: نقر، لوحة مفاتيح، وسحب وإفلات */
+  function bindImageDropzone() {
+    var zone = document.getElementById("projectImageDrop");
+    var input = document.getElementById("projectImageInput");
+    var clearBtn = document.getElementById("projectImageClear");
+
+    if (!zone || !input) return;
+
+    zone.addEventListener("click", function (e) {
+      /* زر الإزالة داخل المنطقة، فلا يفتح المنتقي */
+      if (e.target.closest("#projectImageClear")) return;
+      input.click();
+    });
+
+    zone.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        input.click();
+      }
+    });
+
+    input.addEventListener("change", function () {
+      if (input.files && input.files[0]) handleImageFile(input.files[0]);
+    });
+
+    if (clearBtn) {
+      clearBtn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        UI.setProjectImage("", "");
+      });
+    }
+
+    ["dragenter", "dragover"].forEach(function (evt) {
+      zone.addEventListener(evt, function (e) {
+        e.preventDefault();
+        zone.classList.add("is-dragover");
+      });
+    });
+
+    ["dragleave", "drop"].forEach(function (evt) {
+      zone.addEventListener(evt, function (e) {
+        e.preventDefault();
+        zone.classList.remove("is-dragover");
+      });
+    });
+
+    zone.addEventListener("drop", function (e) {
+      var files = e.dataTransfer && e.dataTransfer.files;
+      if (files && files[0]) handleImageFile(files[0]);
+    });
+
+    /* إفلات خارج المنطقة يفتح الصورة في التبويب ويضيّع النموذج */
+    ["dragover", "drop"].forEach(function (evt) {
+      document.addEventListener(evt, function (e) {
+        if (!e.target.closest("#projectImageDrop")) e.preventDefault();
+      });
+    });
+  }
 
   /**
    * تحويل نص المهارات إلى قائمة.
@@ -1725,6 +1861,9 @@
     UI.setFormMode("project", "add");
     UI.openFormModal("addProjectModal", "addProjectForm", "projectTitle");
 
+    /* reset لا يمسح الصورة: محفوظة في حالة الوحدة لا في حقل الملف */
+    UI.setProjectImage("", "");
+
     /* reset يمسح الاختيار، فنعيد بناء القائمة بعده */
     UI.fillTraineeSelect(state.trainees, state.activeTraineeId);
   }
@@ -1756,6 +1895,12 @@
 
     if (!data.traineeId) {
       UI.setFieldError("projectTrainee", true);
+      invalid = true;
+    }
+
+    /* الرابط اختياري، لكنه إن وُجد فلا يُقبل إلا http/https */
+    if (data.repoUrl && !/^https?:\/\/.+/i.test(data.repoUrl)) {
+      UI.setFieldError("projectRepoUrl", true);
       invalid = true;
     }
 

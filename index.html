@@ -40,13 +40,12 @@
 
   <!-- ملفات التنسيق -->
   <link rel="stylesheet" href="css/styles.css?v=9674ddba8765" />
-  <link rel="stylesheet" href="css/components.css?v=98061d854b07" />
+  <link rel="stylesheet" href="css/components.css?v=e322dea82a6e" />
 </head>
 
 <body>
   <!-- تخطٍّ سريع إلى المحتوى لمستخدمي لوحة المفاتيح -->
   <a href="#mainContent" class="skip-link">تخطَّ إلى المحتوى الرئيسي</a>
-
 
   <!-- ===================================================================
        1. الشريط العلوي
@@ -393,6 +392,53 @@
             <label class="field-label" for="projectDescription">وصف المشروع</label>
             <textarea id="projectDescription" name="description" class="input-control" rows="3"
                       placeholder="وصف مختصر لفكرة المشروع وأهدافه..." maxlength="220"></textarea>
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="projectRepoUrl">
+              <i class="fa-solid fa-link" aria-hidden="true"></i>
+              رابط المشروع
+              <span class="field-optional">اختياري</span>
+            </label>
+            <input type="url" id="projectRepoUrl" name="repoUrl" class="input-control"
+                   placeholder="https://github.com/username/project" maxlength="500"
+                   autocomplete="off" dir="ltr" />
+            <p class="field-error" id="projectRepoUrlError" hidden>الرابط يجب أن يبدأ بـ http أو https.</p>
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="projectImageInput">
+              <i class="fa-regular fa-image" aria-hidden="true"></i>
+              صورة المشروع
+              <span class="field-optional">اختياري</span>
+            </label>
+
+            <!-- منطقة الإفلات: الضغط عليها يفتح منتقي الملفات أيضاً -->
+            <div class="dropzone" id="projectImageDrop" tabindex="0" role="button"
+                 aria-controls="projectImageInput"
+                 aria-label="اختر صورة المشروع أو اسحبها وأفلتها هنا">
+              <input type="file" id="projectImageInput" name="image"
+                     accept="image/png,image/jpeg,image/webp,image/gif" hidden />
+
+              <div class="dropzone-empty" id="projectImageEmpty">
+                <i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i>
+                <span class="dropzone-title">اضغط لاختيار ملف</span>
+                <span class="dropzone-hint">أو اسحب وأفلت هنا · الحد الأقصى 5 MB</span>
+              </div>
+
+              <div class="dropzone-preview" id="projectImagePreview" hidden>
+                <img id="projectImageThumb" alt="معاينة صورة المشروع" />
+                <div class="dropzone-meta">
+                  <span id="projectImageName">—</span>
+                  <button type="button" class="btn btn-sm btn-danger-ghost" id="projectImageClear">
+                    <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
+                    إزالة
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <p class="field-error" id="projectImageError" hidden>تعذّر استخدام هذا الملف.</p>
           </div>
 
           <div class="field">
@@ -1007,9 +1053,9 @@
 
   <!-- منطق التطبيق: البيانات ثم العرض ثم المتحكّم -->
   <!-- GitHub Pages: طبقة بيانات محلية بدل الخادم -->
-  <script src="js/demo-seed.js?v=f7a4a3bd0c29"></script>
-  <script src="js/dataService.demo.js?v=4cd2a5e4f0ba"></script>
-  <script src="js/ui.js?v=36afb317b6fa"></script>
-  <script src="js/app.js?v=6a2cae01f4f8"></script>
+  <script src="js/demo-seed.js?v=1b791b4681de"></script>
+  <script src="js/dataService.demo.js?v=7626572dde4b"></script>
+  <script src="js/ui.js?v=700fc00f5b32"></script>
+  <script src="js/app.js?v=2982f879f86a"></script>
 </body>
 </html>

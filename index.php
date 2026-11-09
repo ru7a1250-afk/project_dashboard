@@ -407,6 +407,53 @@ function asset(string $path): string {
           </div>
 
           <div class="field">
+            <label class="field-label" for="projectRepoUrl">
+              <i class="fa-solid fa-link" aria-hidden="true"></i>
+              رابط المشروع
+              <span class="field-optional">اختياري</span>
+            </label>
+            <input type="url" id="projectRepoUrl" name="repoUrl" class="input-control"
+                   placeholder="https://github.com/username/project" maxlength="500"
+                   autocomplete="off" dir="ltr" />
+            <p class="field-error" id="projectRepoUrlError" hidden>الرابط يجب أن يبدأ بـ http أو https.</p>
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="projectImageInput">
+              <i class="fa-regular fa-image" aria-hidden="true"></i>
+              صورة المشروع
+              <span class="field-optional">اختياري</span>
+            </label>
+
+            <!-- منطقة الإفلات: الضغط عليها يفتح منتقي الملفات أيضاً -->
+            <div class="dropzone" id="projectImageDrop" tabindex="0" role="button"
+                 aria-controls="projectImageInput"
+                 aria-label="اختر صورة المشروع أو اسحبها وأفلتها هنا">
+              <input type="file" id="projectImageInput" name="image"
+                     accept="image/png,image/jpeg,image/webp,image/gif" hidden />
+
+              <div class="dropzone-empty" id="projectImageEmpty">
+                <i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i>
+                <span class="dropzone-title">اضغط لاختيار ملف</span>
+                <span class="dropzone-hint">أو اسحب وأفلت هنا · الحد الأقصى 5 MB</span>
+              </div>
+
+              <div class="dropzone-preview" id="projectImagePreview" hidden>
+                <img id="projectImageThumb" alt="معاينة صورة المشروع" />
+                <div class="dropzone-meta">
+                  <span id="projectImageName">—</span>
+                  <button type="button" class="btn btn-sm btn-danger-ghost" id="projectImageClear">
+                    <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
+                    إزالة
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <p class="field-error" id="projectImageError" hidden>تعذّر استخدام هذا الملف.</p>
+          </div>
+
+          <div class="field">
             <label class="field-label" for="projectFeedback">
               <i class="fa-solid fa-comment-dots" aria-hidden="true"></i>
               ملاحظات التقييم

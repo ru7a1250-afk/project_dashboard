@@ -252,6 +252,9 @@ function mapProject(array $row, array $platforms = [], array $trackLabels = []):
         'dueDate'     => $row['due_date'],
         'description' => $row['description'],
         'feedback'    => $row['feedback'] ?? '',
+        /* حقول التسليم: رابط المستودع وصورة المشروع (data URL) */
+        'repoUrl'     => $row['repo_url'] ?? '',
+        'image'       => $row['image'] ?? '',
         'score'       => $row['score'] === null ? null : (int) $row['score'],
         'createdAt'   => $row['created_at'],
         'updatedAt'   => $row['updated_at'],
@@ -338,6 +341,52 @@ function setTrackSkills(PDO $pdo, string $trackId, array $skills): array
     }
 
     return $clean;
+}
+
+/**
+ * تنظيف رابط المشروع.
+ * يُقبل http/https فقط: javascript: و data: في خانة رابط تُنفَّذ
+ * عند النقر، فتصبح ثغرة.
+ */
+function cleanRepoUrl($value): string
+{
+    $url = trim((string) $value);
+
+    if ($url === '') return '';
+
+    $scheme = strtolower((string) parse_url($url, PHP_URL_SCHEME));
+
+    if (!in_array($scheme, ['http', 'https'], true)) {
+        fail('رابط المشروع يجب أن يبدأ بـ http أو https');
+    }
+
+    if (mb_strlen($url) > 500) {
+        fail('رابط المشروع طويل جداً');
+    }
+
+    return $url;
+}
+
+/**
+ * تنظيف صورة المشروع.
+ * تُقبل data URL لصورة فقط، بحد أقصى ~2MB بعد الترميز — الواجهة
+ * تضغط الصورة قبل الإرسال، وهذا الحد خط الدفاع الأخير.
+ */
+function cleanImage($value): string
+{
+    $img = trim((string) $value);
+
+    if ($img === '') return '';
+
+    if (!preg_match('#^data:image/(png|jpeg|jpg|webp|gif);base64,[A-Za-z0-9+/=]+$#', $img)) {
+        fail('صيغة الصورة غير مدعومة');
+    }
+
+    if (strlen($img) > 2 * 1024 * 1024) {
+        fail('حجم الصورة كبير جداً بعد الضغط');
+    }
+
+    return $img;
 }
 
 /** اسم الدفعة من معرّفها، أو سلسلة فارغة إن لم توجد */
@@ -503,8 +552,8 @@ try {
             $stmt = $pdo->prepare(
                 'INSERT INTO projects
                  (id, project_name, trainee_id, status, track, platform_id, progress,
-                  due_date, description, feedback, score, created_at, updated_at)
-                 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)'
+                  due_date, description, repo_url, image, feedback, score, created_at, updated_at)
+                 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
             );
 
             $stmt->execute([
@@ -518,8 +567,10 @@ try {
                 clampPercent($input['progress'] ?? null, $defaultProgress),
                 /* فراغ يُخزَّن NULL لا سلسلة فارغة (عمود DATE) */
                 ($input['dueDate'] ?? null) ?: null,
-                trim((string) ($input['description'] ?? '')) ?: 'مشروع جديد بانتظار التقييم.',
-                trim((string) ($input['feedback'] ?? '')),
+                trim((string) ($input["description"] ?? "")) ?: "مشروع جديد بانتظار التقييم.",
+                cleanRepoUrl($input["repoUrl"] ?? ""),
+                cleanImage($input["image"] ?? ""),
+                trim((string) ($input["feedback"] ?? "")),
                 clampPercent($input['score'] ?? null, null),
                 today(),
                 today(),
@@ -585,6 +636,16 @@ try {
             if (array_key_exists('feedback', $changes)) {
                 $sets[] = 'feedback = ?';
                 $params[] = trim((string) $changes['feedback']);
+            }
+
+            if (array_key_exists('repoUrl', $changes)) {
+                $sets[] = 'repo_url = ?';
+                $params[] = cleanRepoUrl($changes['repoUrl']);
+            }
+
+            if (array_key_exists('image', $changes)) {
+                $sets[] = 'image = ?';
+                $params[] = cleanImage($changes['image']);
             }
 
             if (isset($changes['status'])) {

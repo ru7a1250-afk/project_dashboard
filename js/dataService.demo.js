@@ -76,6 +76,7 @@ var DataService = (function () {
       status: status, track: track, trackLabel: "",
       progress: progress, dueDate: dueDate, description: description,
       feedback: feedback || "", score: score,
+      repoUrl: "", image: "",
       createdAt: "2026-02-01", updatedAt: "2026-02-01",
       platformId: platformId, platformName: "", platformShort: "", platformColor: ""
     };
@@ -193,6 +194,40 @@ var DataService = (function () {
     return byId(load().tracks, key) ? key : key;
   }
 
+  /* نفس تحقّق الخادم: لا يُقبل في خانة رابط إلا http/https */
+  function cleanRepoUrl(value) {
+    var url = String(value || "").trim();
+
+    if (!url) return "";
+
+    if (!/^https?:\/\//i.test(url)) {
+      throw new Error("رابط المشروع يجب أن يبدأ بـ http أو https");
+    }
+
+    if (url.length > 500) {
+      throw new Error("رابط المشروع طويل جداً");
+    }
+
+    return url;
+  }
+
+  /* صورة بصيغة data URL فقط، والحجم محدود لأن التخزين المحلي صغير */
+  function cleanImage(value) {
+    var img = String(value || "").trim();
+
+    if (!img) return "";
+
+    if (!/^data:image\/(png|jpeg|jpg|webp|gif);base64,[A-Za-z0-9+/=]+$/.test(img)) {
+      throw new Error("صيغة الصورة غير مدعومة");
+    }
+
+    if (img.length > 2 * 1024 * 1024) {
+      throw new Error("حجم الصورة كبير جداً بعد الضغط");
+    }
+
+    return img;
+  }
+
   function clampPercent(v, fallback) {
     var n = Number(v);
     if (isNaN(n)) return fallback;
@@ -263,6 +298,14 @@ var DataService = (function () {
       d.platformId || (owner ? owner.platformId : null)
     );
 
+    /* الخطأ يُعاد وعداً مرفوضاً لا استثناءً متزامناً، كما يفعل الخادم */
+    try {
+      p.repoUrl = cleanRepoUrl(d.repoUrl);
+      p.image   = cleanImage(d.image);
+    } catch (e) {
+      return err(e.message);
+    }
+
     p.createdAt = today();
     p.updatedAt = today();
 
@@ -300,6 +343,12 @@ var DataService = (function () {
     if (c.progress !== undefined)    p.progress = clampPercent(c.progress, p.progress);
     if (c.description !== undefined) p.description = String(c.description);
     if (c.feedback !== undefined)    p.feedback = String(c.feedback);
+    try {
+      if (c.repoUrl !== undefined) p.repoUrl = cleanRepoUrl(c.repoUrl);
+      if (c.image !== undefined)   p.image = cleanImage(c.image);
+    } catch (e) {
+      return err(e.message);
+    }
     if (c.platformId !== undefined)  p.platformId = c.platformId || null;
     if (c.dueDate !== undefined)     p.dueDate = c.dueDate || null;
 

@@ -282,7 +282,7 @@ var DEMO_SEED = {
             "avatar": "https://ui-avatars.com/api/?background=4f46e5&color=fff&bold=true&name=%D8%B1%D8%A8%D9%89",
             "joinedAt": "2026-01-15",
             "certified": true,
-            "certifiedAt": "2026-09-27",
+            "certifiedAt": "2026-11-09",
             "certificateSerial": "TBM-2026-T_2",
             "skills": {
                 "HTML": 95,
@@ -336,7 +336,20 @@ var DEMO_SEED = {
                 "UI/UX": 65,
                 "PHP": 92
             },
-            "badges": []
+            "badges": [
+                {
+                    "id": "first-approval",
+                    "title": "أول إنجاز 🎯",
+                    "icon": "fa-seedling",
+                    "earnedAt": "2026-11-09"
+                },
+                {
+                    "id": "code-hero",
+                    "title": "بطل الكود! 🏆",
+                    "icon": "fa-medal",
+                    "earnedAt": "2026-11-09"
+                }
+            ]
         },
         {
             "id": "t_4",
@@ -471,10 +484,10 @@ var DEMO_SEED = {
             "title": "تطبيق سند",
             "traineeId": "t_2",
             "traineeName": "",
-            "status": "under_review",
+            "status": "approved",
             "track": "FrontEnd",
             "trackLabel": "",
-            "progress": 65,
+            "progress": 100,
             "dueDate": "2026-11-02",
             "description": "تطبيق لربط المستفيدين بالجهات الخيرية وتنظيم الطلبات.",
             "feedback": "",
@@ -534,16 +547,16 @@ var DEMO_SEED = {
             "title": "لوحة تحليلات المعسكر",
             "traineeId": "t_3",
             "traineeName": "",
-            "status": "under_review",
+            "status": "approved",
             "track": "FullStack",
             "trackLabel": "",
-            "progress": 80,
+            "progress": 100,
             "dueDate": "2026-12-01",
             "description": "لوحة مؤشرات لمتابعة أداء المتدربين والمشاريع.",
             "feedback": "",
-            "score": null,
+            "score": 99,
             "createdAt": "2026-09-01",
-            "updatedAt": "2026-09-05",
+            "updatedAt": "2026-11-09",
             "platformId": "pf_1",
             "platformName": "",
             "platformShort": "",
@@ -582,5 +595,5 @@ var DEMO_SEED = {
         "platform": 11,
         "cohort": 3
     },
-    "version": "12c8603bcafa"
+    "version": "4fd4ee35a065"
 };

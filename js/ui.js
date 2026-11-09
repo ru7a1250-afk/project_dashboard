@@ -531,7 +531,19 @@ var UI = (function () {
             '</span>'
           : '') +
       '</div>' +
+      /* صورة التسليم: lazy حتى لا تؤخّر اللوحة حين تكثر البطاقات */
+      (p.image
+        ? '<img class="task-image" src="' + esc(p.image) + '" alt="صورة ' + esc(p.projectName || p.title || '') + '" loading="lazy" />'
+        : '') +
       '<p class="task-desc">' + esc(p.description) + '</p>' +
+      /* rel=noopener يمنع الصفحة المفتوحة من التحكّم بصفحتنا */
+      (p.repoUrl
+        ? '<a class="task-link" href="' + esc(p.repoUrl) + '" target="_blank" rel="noopener noreferrer"' +
+            ' title="' + esc(p.repoUrl) + '">' +
+            '<i class="fa-solid fa-link" aria-hidden="true"></i>' +
+            '<span>رابط المشروع</span>' +
+          '</a>'
+        : '') +
       (p.feedback
         ? '<p class="task-feedback" title="' + esc(p.feedback) + '">' +
             '<i class="fa-solid fa-comment-dots" aria-hidden="true"></i>' +
@@ -1360,6 +1372,48 @@ var UI = (function () {
     };
   }
 
+  /*
+     صورة المشروع المعروضة في النموذج (data URL).
+     تُحفظ هنا لا في حقل الملف، لأن حقل الملف لا يمكن ملؤه برمجياً
+     عند فتح مشروع للتعديل، ولأن الصورة تُضغط قبل العرض.
+  */
+  var pendingProjectImage = "";
+
+  /**
+   * عرض صورة في منطقة الإفلات أو تفريغها.
+   * @param {string} dataUrl - فارغ يعني لا صورة
+   * @param {string} label - اسم الملف أو وصف يظهر تحت المعاينة
+   */
+  function setProjectImage(dataUrl, label) {
+    pendingProjectImage = dataUrl || "";
+
+    var empty = document.getElementById("projectImageEmpty");
+    var preview = document.getElementById("projectImagePreview");
+    var thumb = document.getElementById("projectImageThumb");
+    var name = document.getElementById("projectImageName");
+    var input = document.getElementById("projectImageInput");
+
+    if (!empty || !preview || !thumb) return;
+
+    if (pendingProjectImage) {
+      thumb.src = pendingProjectImage;
+      if (name) name.textContent = label || "صورة المشروع";
+      empty.hidden = true;
+      preview.hidden = false;
+    } else {
+      thumb.removeAttribute("src");
+      empty.hidden = false;
+      preview.hidden = true;
+      /* تفريغ حقل الملف حتى يمكن إعادة اختيار الملف نفسه */
+      if (input) input.value = "";
+    }
+  }
+
+  /** الصورة المعروضة حالياً في النموذج */
+  function getProjectImage() {
+    return pendingProjectImage;
+  }
+
   /** قراءة قيم نموذج المشروع كما هي في الواجهة */
   function readProjectForm() {
     var form = el.addProjectForm;
@@ -1373,6 +1427,10 @@ var UI = (function () {
       status: form.elements.status.value,
       platformId: form.elements.platformId ? form.elements.platformId.value : "",
       dueDate: form.elements.dueDate ? form.elements.dueDate.value : "",
+      repoUrl: form.elements.repoUrl ? form.elements.repoUrl.value.trim() : "",
+      /* الصورة لا تُقرأ من حقل الملف بل من المعاينة: هناك تُحفظ
+         بعد الضغط، وتبقى محفوظة عند تعديل مشروع دون اختيار ملف جديد */
+      image: pendingProjectImage,
       score: form.elements.score.value === '' ? null : Number(form.elements.score.value)
     };
   }
@@ -1446,6 +1504,8 @@ var UI = (function () {
     form.elements.status.value = project.status || UNDER_REVIEW;
     if (form.elements.platformId) form.elements.platformId.value = project.platformId || "";
     if (form.elements.dueDate) form.elements.dueDate.value = project.dueDate || "";
+    if (form.elements.repoUrl) form.elements.repoUrl.value = project.repoUrl || "";
+    setProjectImage(project.image || "", "الصورة الحالية");
     form.elements.score.value =
       (typeof project.score === "number") ? project.score : "";
   }
@@ -2003,6 +2063,8 @@ var UI = (function () {
     fillTraineeSelect: fillTraineeSelect,
     readTraineeForm: readTraineeForm,
     readProjectForm: readProjectForm,
+    setProjectImage: setProjectImage,
+    getProjectImage: getProjectImage,
     setFormBusy: setFormBusy,
     setFormMode: setFormMode,
     fillTrackSelects: fillTrackSelects,

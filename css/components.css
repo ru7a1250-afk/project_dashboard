@@ -2191,3 +2191,128 @@ textarea.input-control { resize: vertical; min-height: 84px; }
   font-size: 11px;
   font-weight: 400;
 }
+
+/* ===================================================================
+   حقول التسليم: رابط المشروع وصورته
+   =================================================================== */
+
+.field-optional {
+  margin-inline-start: var(--sp-1);
+  padding: 1px 6px;
+  border-radius: var(--r-full);
+  background: var(--bg-subtle);
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 400;
+}
+
+/* منطقة اختيار الصورة */
+.dropzone {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 120px;
+  padding: var(--sp-4);
+  border: 2px dashed var(--border-strong);
+  border-radius: var(--r-md);
+  background: var(--bg-subtle);
+  cursor: pointer;
+  transition: border-color var(--t-fast), background var(--t-fast);
+}
+
+.dropzone:hover,
+.dropzone:focus-visible {
+  border-color: var(--brand);
+  background: var(--brand-soft);
+  outline: none;
+}
+
+.dropzone.is-dragover {
+  border-color: var(--brand);
+  background: var(--brand-soft);
+  border-style: solid;
+}
+
+.dropzone-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-1);
+  color: var(--text-muted);
+  text-align: center;
+  pointer-events: none;
+}
+
+.dropzone-empty i { font-size: 22px; color: var(--brand); }
+
+.dropzone-title { color: var(--text-base); font-size: 13px; font-weight: 700; }
+.dropzone-hint  { font-size: 11px; }
+
+.dropzone-preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  width: 100%;
+}
+
+.dropzone-preview img {
+  width: 100%;
+  max-height: 180px;
+  object-fit: contain;
+  border-radius: var(--r-sm);
+  background: var(--bg-surface);
+}
+
+.dropzone-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.dropzone-meta span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* صورة المشروع على البطاقة */
+.task-image {
+  width: 100%;
+  max-height: 140px;
+  object-fit: cover;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--bg-subtle);
+}
+
+/* رابط المشروع على البطاقة */
+.task-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  align-self: flex-start;
+  max-width: 100%;
+  padding: 3px var(--sp-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-full);
+  color: var(--brand);
+  font-size: 11px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background var(--t-fast), border-color var(--t-fast);
+}
+
+.task-link:hover {
+  background: var(--brand-soft);
+  border-color: var(--brand);
+}
+
+.task-link span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
