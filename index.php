@@ -19,6 +19,29 @@ function asset(string $path): string {
   <meta name="description" content="لوحة تحكّم لإدارة معسكرات البرمجة: متابعة المتدربين، تقييم المشاريع، ورصد المهارات وإصدار الشهادات." />
   <meta name="color-scheme" content="light dark" />
 
+  <!--
+    ضبط السمة قبل أول رسم لمنع وميض الوضع الليلي (FOUC).
+    يجب أن يبقى هنا قبل ملفات التنسيق: تأجيله إلى app.js في آخر
+    الصفحة يجعل المتصفح يرسم الواجهة فاتحة ثم يقلبها داكنة.
+  -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("tbm_theme");
+
+        if (!t) {
+          t = window.matchMedia &&
+              window.matchMedia("(prefers-color-scheme: dark)").matches
+            ? "dark" : "light";
+        }
+
+        document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {
+        /* التخزين محجوب — تبقى السمة الافتراضية */
+      }
+    })();
+  </script>
+
   <!-- Google Fonts: Tajawal -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -934,12 +957,25 @@ function asset(string $path): string {
   <!-- ===================================================================
        المكتبات الخارجية
        =================================================================== -->
+  <!--
+    المكتبات الخارجية بإصدارات مثبّتة وبصمات integrity:
+    لو تغيّر الملف على الـ CDN رفض المتصفح تشغيله بدل أن ينفّذه بثقة.
+  -->
+
   <!-- Chart.js: المخطط الراداري -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"
+          integrity="sha384-JUh163oCRItcbPme8pYnROHQMC6fNKTBWtRG3I3I0erJkzNgL7uxKlNwcrcFKeqF"
+          crossorigin="anonymous"></script>
+
   <!-- SortableJS: السحب والإفلات -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"
+          integrity="sha384-BSxuMLxX+FCbTdYec3TbXlnMGEEM2QXTFdtDaveen71o+jswm2J36+xFqp8k4VHM"
+          crossorigin="anonymous"></script>
+
   <!-- Canvas Confetti: احتفالات إنجاز المشاريع -->
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.js"
+          integrity="sha384-/Ko/tqVwPYurnBe+Mj8WWw+39WmyOZn/kU+neqXn4hRxGI575k07mB/hIekAT51+"
+          crossorigin="anonymous"></script>
 
   <!-- منطق التطبيق: البيانات ثم العرض ثم المتحكّم -->
   <script src="<?= asset("js/dataService.js") ?>"></script>
