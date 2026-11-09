@@ -99,9 +99,9 @@ var UI = (function () {
 
   /* نظام النقاط — مرجع واحد لحساب الترتيب */
   var POINTS = {
-    approved: 50,   /* مشروع مُجاز */
-    review:   10,   /* مشروع قيد التقييم */
-    rework:   5,    /* مشروع يحتاج تعديل */
+    approved:       50,  /* مشروع مُجاز */
+    under_review:   10,  /* مشروع قيد التقييم */
+    needs_revision: 5,   /* مشروع يحتاج تعديل */
     scoreBonus: 0.5,/* نصف نقطة لكل درجة تقييم */
     certified: 25   /* مكافأة الحصول على الشهادة */
   };
@@ -787,7 +787,7 @@ var UI = (function () {
   function scoreOf(trainee, projects) {
     var own = projects.filter(function (p) { return p.traineeId === trainee.id; });
 
-    var tally = { approved: 0, review: 0, rework: 0 };
+    var tally = { approved: 0, under_review: 0, needs_revision: 0 };
     var points = 0;
 
     own.forEach(function (p) {
@@ -807,8 +807,8 @@ var UI = (function () {
     return {
       points: Math.round(points),
       approved: tally.approved,
-      review: tally.review,
-      rework: tally.rework,
+      review: tally.under_review,
+      rework: tally.needs_revision,
       total: own.length
     };
   }
@@ -1063,8 +1063,8 @@ var UI = (function () {
   /* حالة المشروع → فئة العقدة وأيقونتها */
   var NODE_STATES = {
     approved: { cls: "is-done",   icon: "fa-check",          label: "مكتمل" },
-    review:   { cls: "is-review", icon: "fa-hourglass-half", label: "تحت التقييم" },
-    rework:   { cls: "is-rework", icon: "fa-pen-ruler",      label: "يحتاج تعديل" }
+    under_review:   { cls: "is-review", icon: "fa-hourglass-half", label: "تحت التقييم" },
+    needs_revision: { cls: "is-rework", icon: "fa-pen-ruler",      label: "يحتاج تعديل" }
   };
 
   /**
@@ -1108,7 +1108,7 @@ var UI = (function () {
     var doneCount = 0;
 
     own.forEach(function (p, index) {
-      var meta = NODE_STATES[p.status] || NODE_STATES.review;
+      var meta = NODE_STATES[p.status] || NODE_STATES.under_review;
       if (p.status === APPROVED) doneCount++;
 
       var li = document.createElement("li");
