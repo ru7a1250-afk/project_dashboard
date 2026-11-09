@@ -151,27 +151,39 @@ $out = $header . ' ' . $json . ";\n";
 file_put_contents('C:/xampp/htdocs/project_dashboard/js/demo-seed.js', $out);
 
 /*
-   ختم روابط الملفات المحلية في index.html ببصمة البيانات.
-   index.php تفعل هذا عبر asset() وfilemtime، أما الصفحة الثابتة فلا
-   تشغّل PHP، فلولا الختم بقي متصفح الزائر على نسخة JS قديمة.
+   ختم روابط الملفات المحلية في index.html.
+
+   الختم بصمة محتوى كل ملف على حدة لا بصمة البيانات: تعديل ui.js
+   دون تغيير البيانات يجب أن يغيّر رابط ui.js وحده، وإلا بقي
+   المتصفح على النسخة القديمة من الكود.
+
+   index.php تفعل المثل عبر asset() وfilemtime، أما الصفحة الثابتة
+   فلا تشغّل PHP، فيُحسب الختم هنا عند التوليد.
 */
-$page = 'C:/xampp/htdocs/project_dashboard/index.html';
+$root = 'C:/xampp/htdocs/project_dashboard/';
+$page = $root . 'index.html';
 $html = file_get_contents($page);
 
 $stamped = preg_replace_callback(
     '/(?:src|href)="((?:css|js)\/[^"?]+)(?:\?v=[^"]*)?"/',
-    static function (array $m) use ($seed) {
+    static function (array $m) use ($root) {
         $attr = str_starts_with($m[0], 'src') ? 'src' : 'href';
-        return $attr . '="' . $m[1] . '?v=' . $seed['version'] . '"';
+        $file = $root . $m[1];
+
+        $stamp = is_file($file)
+            ? substr(sha1_file($file), 0, 12)
+            : 'missing';
+
+        return $attr . '="' . $m[1] . '?v=' . $stamp . '"';
     },
     $html
 );
 
 if ($stamped !== null && $stamped !== $html) {
     file_put_contents($page, $stamped);
-    echo "index.html: روابط مختومة بـ ", $seed['version'], "\n";
+    echo "index.html: أُعيد ختم الروابط\n";
 } else {
-    echo "index.html: لا تغيير\n";
+    echo "index.html: لا تغيير في الروابط\n";
 }
 
 echo "trainees=", count($trainees),
