@@ -4,6 +4,8 @@
 
 مبنية بـ **HTML5 + CSS3 + Vanilla JavaScript** في الواجهة، و**PHP + MySQL** في الخلفية، بلا أي إطار عمل.
 
+![لوحة تقييم المشاريع](docs/screenshots/board-light.jpg)
+
 ### 🔗 عرض مباشر
 
 **https://ru7a1250-afk.github.io/project_dashboard/**
@@ -18,6 +20,22 @@
 | الملف | `index.php` | `index.html` |
 | البيانات | PHP + MySQL | LocalStorage |
 | التشغيل | XAMPP محلياً | أي متصفح |
+
+---
+
+## لقطات
+
+### الوضع الليلي
+
+يُضبط قبل أول رسم للصفحة، فلا تومض الواجهة بيضاء قبل أن تُعتم.
+
+![الوضع الليلي](docs/screenshots/board-dark.jpg)
+
+### شهادة الاجتياز
+
+تحمل اسم المتدرب ومساره ودرجته واسم الجهة التدريبية، وتُطبع في صفحة واحدة.
+
+![شهادة الاجتياز](docs/screenshots/certificate.jpg)
 
 ---
 
