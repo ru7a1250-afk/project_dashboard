@@ -876,6 +876,15 @@ var UI = (function () {
       el.podium.appendChild(buildPodiumSlot(row));
     });
 
+    /*
+       المنصّة ثلاثة مراكز دائماً: حين يقلّ أصحاب النقاط عن ثلاثة
+       يظهر الباقي مكاناً شاغراً لا متوّجاً بصفر — فتبقى المنصّة
+       متوازنة بصرياً ويفهم المدرّب أن المركز لم يُحسم بعد.
+    */
+    for (var place = scoring.length + 1; place <= 3; place++) {
+      el.podium.appendChild(buildEmptyPodiumSlot(place));
+    }
+
     /* 5. بقية الترتيب: من بعد المتوّجين، ومعهم من لا نقاط له */
     var rest = document.createDocumentFragment();
 
@@ -886,6 +895,30 @@ var UI = (function () {
     el.rankList.appendChild(rest);
 
     return ranked;
+  }
+
+  /**
+   * مكان شاغر على المنصّة — مركز لم يبلغه أحد بعد.
+   * @param {number} place - رقم المركز
+   */
+  function buildEmptyPodiumSlot(place) {
+    var slot = document.createElement("div");
+    slot.className = "podium-slot is-empty";
+    slot.dataset.place = place;
+
+    var icon = place === 1 ? "fa-crown" : "fa-medal";
+
+    slot.innerHTML =
+      '<span class="podium-crown"><i class="fa-solid ' + icon + '" aria-hidden="true"></i></span>' +
+      '<span class="podium-avatar-empty" aria-hidden="true">' + place + '</span>' +
+      '<span class="podium-name">المركز ' + placeLabel(place) + '</span>' +
+      '<span class="podium-points">بانتظار أول مشروع مُجاز</span>';
+
+    return slot;
+  }
+
+  function placeLabel(place) {
+    return place === 1 ? "الأول" : place === 2 ? "الثاني" : "الثالث";
   }
 
   function buildPodiumSlot(row) {

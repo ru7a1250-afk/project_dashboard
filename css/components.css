@@ -2147,3 +2147,47 @@ textarea.input-control { resize: vertical; min-height: 84px; }
   /* margin: 0 يمنع المتصفح من طباعة التاريخ والرابط ورقم الصفحة */
   @page { size: A4 landscape; margin: 0; }
 }
+
+/* ===================================================================
+   مكان شاغر على منصّة التتويج — مركز لم يبلغه أحد بعد
+   =================================================================== */
+.podium-slot.is-empty {
+  background: transparent;
+  border-style: dashed;
+  border-color: var(--border);
+  box-shadow: none;
+}
+
+.podium-slot.is-empty:hover { transform: none; box-shadow: none; }
+
+/* المركز الأول الشاغر لا يُبرز بالذهبي: لا متصدّر بعد */
+.podium-slot.is-empty[data-place="1"] { border-color: var(--border); }
+
+.podium-slot.is-empty .podium-crown {
+  background: var(--bg-hover);
+  color: var(--text-muted);
+}
+
+.podium-avatar-empty {
+  display: grid;
+  place-items: center;
+  width: 48px; height: 48px;
+  border: 2px dashed var(--border-strong);
+  border-radius: var(--r-full);
+  color: var(--text-muted);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.podium-slot.is-empty[data-place="1"] .podium-avatar-empty {
+  width: 64px; height: 64px;
+  font-size: 22px;
+}
+
+.podium-slot.is-empty .podium-name  { color: var(--text-muted); }
+
+.podium-slot.is-empty .podium-points {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 400;
+}
