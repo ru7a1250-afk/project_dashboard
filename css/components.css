@@ -2147,3 +2147,42 @@ textarea.input-control { resize: vertical; min-height: 84px; }
   /* margin: 0 يمنع المتصفح من طباعة التاريخ والرابط ورقم الصفحة */
   @page { size: A4 landscape; margin: 0; }
 }
+
+/* ===================================================================
+   شريط العرض التجريبي — يظهر في نسخة GitHub Pages فقط (index.html)
+   =================================================================== */
+.demo-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2) var(--sp-3);
+  padding: var(--sp-2) var(--sp-4);
+  background: var(--brand-soft);
+  border-block-end: 1px solid var(--border);
+  color: var(--text-base);
+  font-size: 13px;
+  line-height: 1.7;
+  text-align: center;
+}
+
+.demo-banner i { color: var(--brand); }
+
+.demo-banner a {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: 2px var(--sp-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-full);
+  color: var(--brand);
+  font-weight: 700;
+  text-decoration: none;
+  transition: background var(--t-fast);
+}
+
+.demo-banner a:hover { background: var(--bg-hover); }
+
+@media (max-width: 600px) {
+  .demo-banner { font-size: 12px; }
+}

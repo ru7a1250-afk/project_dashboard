@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>منصة إدارة معسكرات البرمجة | Tech Bootcamp Manager</title>
+  <meta name="description" content="لوحة تحكّم لإدارة معسكرات البرمجة: متابعة المتدربين، تقييم المشاريع، ورصد المهارات وإصدار الشهادات." />
+  <meta name="color-scheme" content="light dark" />
+
+  <!--
+    ضبط السمة قبل أول رسم لمنع وميض الوضع الليلي (FOUC).
+    يجب أن يبقى هنا قبل ملفات التنسيق: تأجيله إلى app.js في آخر
+    الصفحة يجعل المتصفح يرسم الواجهة فاتحة ثم يقلبها داكنة.
+  -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("tbm_theme");
+
+        if (!t) {
+          t = window.matchMedia &&
+              window.matchMedia("(prefers-color-scheme: dark)").matches
+            ? "dark" : "light";
+        }
+
+        document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {
+        /* التخزين محجوب — تبقى السمة الافتراضية */
+      }
+    })();
+  </script>
+
+  <!-- Google Fonts: Tajawal -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&display=swap" rel="stylesheet" />
+
+  <!-- FontAwesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+
+  <!-- ملفات التنسيق -->
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="css/components.css" />
+</head>
+
+<body>
+  <!-- تخطٍّ سريع إلى المحتوى لمستخدمي لوحة المفاتيح -->
+  <a href="#mainContent" class="skip-link">تخطَّ إلى المحتوى الرئيسي</a>
+
+  <!-- شريط العرض التجريبي: يظهر في نسخة GitHub Pages فقط -->
+  <div class="demo-banner no-print" role="status">
+    <i class="fa-solid fa-flask" aria-hidden="true"></i>
+    <span>
+      <strong>عرض تجريبي.</strong>
+      البيانات وهمية وتُحفظ في متصفحك وحده — النسخة الكاملة تعمل بـ PHP و MySQL.
+    </span>
+    <a href="https://github.com/ru7a1250-afk/project_dashboard" target="_blank" rel="noopener">
+      <i class="fa-brands fa-github" aria-hidden="true"></i>
+      الكود المصدري
+    </a>
+  </div>
+
+  <!-- ===================================================================
+       1. الشريط العلوي
+       =================================================================== -->
+  <header class="app-header" id="appHeader">
+    <div class="header-brand">
+      <i class="fa-solid fa-laptop-code brand-icon" aria-hidden="true"></i>
+      <div class="brand-text">
+        <h1 class="brand-title">منصة إدارة معسكرات البرمجة</h1>
+        <p class="brand-desc">تابع المتدربين، قيّم المشاريع، وأصدر الشهادات من مكان واحد.</p>
+      </div>
+    </div>
+
+    <nav class="header-actions" aria-label="إجراءات سريعة">
+      <!-- الزر البارز: إضافة مشروع -->
+      <button type="button" class="btn btn-primary btn-cta" id="addProjectBtn">
+        <i class="fa-solid fa-plus" aria-hidden="true"></i>
+        <span>إضافة مشروع جديد</span>
+      </button>
+
+      <button type="button" class="btn btn-secondary" id="addTraineeBtn">
+        <i class="fa-solid fa-user-plus" aria-hidden="true"></i>
+        <span>إضافة متدرب</span>
+      </button>
+
+      <button type="button" class="btn btn-icon" id="settingsBtn"
+              aria-label="إعدادات المنصة" title="إعدادات المنصة">
+        <i class="fa-solid fa-gear" aria-hidden="true"></i>
+      </button>
+
+      <button type="button" class="btn btn-icon" id="themeToggle"
+              aria-label="تبديل الوضع الداكن" title="تبديل الوضع الداكن">
+        <i class="fa-solid fa-moon" id="themeIcon" aria-hidden="true"></i>
+      </button>
+    </nav>
+  </header>
+
+  <!-- ===================================================================
+       2. بطاقات الإحصائيات
+       =================================================================== -->
+  <section class="stats-grid" aria-label="ملخّص حالة المشاريع">
+    <article class="stat-card stat-total">
+      <span class="stat-icon" aria-hidden="true"><i class="fa-solid fa-diagram-project"></i></span>
+      <div class="stat-body">
+        <span class="stat-value" id="statProjects">0</span>
+        <span class="stat-label">إجمالي المشاريع</span>
+      </div>
+    </article>
+
+    <article class="stat-card stat-approved">
+      <span class="stat-icon" aria-hidden="true"><i class="fa-solid fa-circle-check"></i></span>
+      <div class="stat-body">
+        <span class="stat-value" id="statApproved">0</span>
+        <span class="stat-label">مشاريع مُجازة</span>
+      </div>
+    </article>
+
+    <article class="stat-card stat-review">
+      <span class="stat-icon" aria-hidden="true"><i class="fa-solid fa-hourglass-half"></i></span>
+      <div class="stat-body">
+        <span class="stat-value" id="statReview">0</span>
+        <span class="stat-label">تحت التقييم</span>
+      </div>
+    </article>
+
+    <article class="stat-card stat-late">
+      <span class="stat-icon" aria-hidden="true"><i class="fa-solid fa-clock"></i></span>
+      <div class="stat-body">
+        <span class="stat-value" id="statLate">0</span>
+        <span class="stat-label">متأخرة عن موعدها</span>
+      </div>
+    </article>
+
+    <article class="stat-card stat-rework">
+      <span class="stat-icon" aria-hidden="true"><i class="fa-solid fa-pen-ruler"></i></span>
+      <div class="stat-body">
+        <span class="stat-value" id="statRework">0</span>
+        <span class="stat-label">تحتاج تعديلاً</span>
+      </div>
+    </article>
+  </section>
+
+  <!-- ===================================================================
+       جسم التطبيق: قائمة المتدربين + المنطقة الرئيسية
+       =================================================================== -->
+  <div class="app-layout">
+
+    <!-- ----------- القائمة الجانبية: المتدربون ----------- -->
+    <aside class="sidebar" id="sidebar" aria-label="قائمة المتدربين">
+      <div class="sidebar-header">
+        <h2 class="sidebar-title">
+          <i class="fa-solid fa-users" aria-hidden="true"></i>
+          المتدربون
+        </h2>
+        <div class="sidebar-tools">
+          <span class="badge" id="traineesCount">0</span>
+          <button type="button" class="btn btn-icon btn-sm" id="resetDataBtn"
+                  title="إعادة البيانات الافتراضية" aria-label="إعادة البيانات الافتراضية">
+            <i class="fa-solid fa-rotate-left" aria-hidden="true"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- بحث عن متدرب -->
+      <div class="sidebar-search">
+        <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+        <label class="sr-only" for="searchTrainee">بحث عن متدرب</label>
+        <input type="search" id="searchTrainee" placeholder="ابحث عن متدرب..." autocomplete="off" />
+      </div>
+
+      <p class="sidebar-note">
+        <i class="fa-solid fa-certificate" aria-hidden="true"></i>
+        الشهادات الصادرة: <strong id="statCertified">0</strong>
+      </p>
+
+      <!-- بطاقات المتدربين — تُحقن عبر JavaScript -->
+      <ul class="trainee-list" id="traineeList"></ul>
+
+      <p class="empty-state" id="traineeEmptyState">
+        <i class="fa-regular fa-face-smile" aria-hidden="true"></i>
+        لا يوجد متدربون بعد، ابدأ بإضافة متدرب جديد.
+      </p>
+    </aside>
+
+    <!-- ----------- المنطقة الرئيسية ----------- -->
+    <main class="main-content" id="mainContent">
+
+      <!-- ===============================================================
+           3. شريط الأدوات والفلاتر
+           =============================================================== -->
+      <section class="board-header">
+        <div>
+          <h2 class="board-title">
+            <i class="fa-solid fa-clipboard-check" aria-hidden="true"></i>
+            لوحة تقييم المشاريع
+          </h2>
+          <p class="board-hint">
+            <i class="fa-solid fa-hand-pointer" aria-hidden="true"></i>
+            اسحب بطاقة المشروع وأفلتها في العمود المناسب لتغيير حالة التقييم.
+          </p>
+        </div>
+
+        <!-- مبدّل العرض: كانبان / شبكة -->
+        <div class="view-switch" role="group" aria-label="طريقة عرض المشاريع">
+          <button type="button" class="view-btn is-active" data-view="kanban"
+                  aria-pressed="true" title="عرض كانبان">
+            <i class="fa-solid fa-table-columns" aria-hidden="true"></i>
+            <span>كانبان</span>
+          </button>
+          <button type="button" class="view-btn" data-view="grid"
+                  aria-pressed="false" title="عرض شبكي">
+            <i class="fa-solid fa-grip" aria-hidden="true"></i>
+            <span>شبكة</span>
+          </button>
+        </div>
+      </section>
+
+      <section class="toolbar" aria-label="بحث وتصفية المشاريع">
+        <div class="toolbar-search">
+          <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+          <label class="sr-only" for="searchProject">بحث في المشاريع</label>
+          <input type="search" id="searchProject" placeholder="ابحث باسم المشروع أو وصفه..." autocomplete="off" />
+        </div>
+
+        <div class="toolbar-filters">
+          <div class="filter-field">
+            <label class="sr-only" for="filterStatus">تصفية حسب الحالة</label>
+            <i class="fa-solid fa-filter" aria-hidden="true"></i>
+            <select id="filterStatus" class="select-control">
+              <option value="all">كل الحالات</option>
+              <option value="under_review">تحت التقييم</option>
+              <option value="approved">مُجاز</option>
+              <option value="needs_revision">يحتاج تعديل</option>
+              <option value="late">⏰ المتأخرة</option>
+            </select>
+          </div>
+
+          <div class="filter-field">
+            <label class="sr-only" for="filterTrack">تصفية حسب المسار</label>
+            <i class="fa-solid fa-route" aria-hidden="true"></i>
+            <!-- الخيارات تُحقن من JavaScript من جدول tracks -->
+            <select id="filterTrack" class="select-control">
+              <option value="all">كل المسارات</option>
+            </select>
+          </div>
+
+          <div class="filter-field">
+            <label class="sr-only" for="filterPlatform">تصفية حسب الجهة</label>
+            <i class="fa-solid fa-building-columns" aria-hidden="true"></i>
+            <select id="filterPlatform" class="select-control">
+              <option value="all">كل الجهات</option>
+            </select>
+          </div>
+
+          <button type="button" class="btn btn-secondary" id="resetFiltersBtn">
+            <i class="fa-solid fa-arrow-rotate-left" aria-hidden="true"></i>
+            <span>إعادة ضبط الفلاتر</span>
+          </button>
+        </div>
+
+        <!-- ملخّص نتائج التصفية — يُحدَّث من JavaScript -->
+        <p class="toolbar-summary" id="filterSummary" role="status" aria-live="polite" hidden></p>
+      </section>
+
+      <!-- ===============================================================
+           4. لوحة المشاريع: كانبان + شبكة
+           =============================================================== -->
+      <section class="kanban-board" id="kanbanBoard" aria-label="لوحة كانبان لتقييم المشاريع">
+
+        <!-- العمود الأول: تحت التقييم -->
+        <article class="kanban-column" data-status="under_review">
+          <header class="column-header column-review">
+            <h3 class="column-title">
+              <i class="fa-solid fa-hourglass-half" aria-hidden="true"></i>
+              تحت التقييم
+            </h3>
+            <span class="badge column-count" id="countReview">0</span>
+          </header>
+          <!-- حاوية SortableJS -->
+          <div class="kanban-list sortable-list" id="col-review" data-status="under_review"></div>
+        </article>
+
+        <!-- العمود الثاني: مُجاز -->
+        <article class="kanban-column" data-status="approved">
+          <header class="column-header column-approved">
+            <h3 class="column-title">
+              <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
+              مُجاز
+            </h3>
+            <span class="badge column-count" id="countApproved">0</span>
+          </header>
+          <!-- حاوية SortableJS -->
+          <div class="kanban-list sortable-list" id="col-approved" data-status="approved"></div>
+        </article>
+
+        <!-- العمود الثالث: يحتاج تعديل -->
+        <article class="kanban-column" data-status="needs_revision">
+          <header class="column-header column-rework">
+            <h3 class="column-title">
+              <i class="fa-solid fa-pen-ruler" aria-hidden="true"></i>
+              يحتاج تعديل
+            </h3>
+            <span class="badge column-count" id="countRework">0</span>
+          </header>
+          <!-- حاوية SortableJS -->
+          <div class="kanban-list sortable-list" id="col-rework" data-status="needs_revision"></div>
+        </article>
+
+      </section>
+
+      <!-- العرض الشبكي البديل — يُملأ من JavaScript في المرحلة الثانية -->
+      <section class="project-grid" id="projectGrid" aria-label="عرض شبكي للمشاريع" hidden></section>
+
+      <!-- ===============================================================
+           قائمة الصدارة
+           =============================================================== -->
+      <section class="leaderboard" id="leaderboard" aria-labelledby="leaderboardTitle">
+        <header class="leaderboard-header">
+          <div>
+            <h2 class="board-title" id="leaderboardTitle">
+              <i class="fa-solid fa-trophy" aria-hidden="true"></i>
+              قائمة الصدارة
+            </h2>
+            <p class="board-hint">
+              <i class="fa-solid fa-arrow-trend-up" aria-hidden="true"></i>
+              الترتيب يتحدّث تلقائياً حسب النقاط المكتسبة من المشاريع المُجازة والشارات.
+            </p>
+          </div>
+
+          <div class="board-tools">
+            <label class="sr-only" for="leaderboardRange">نطاق الترتيب</label>
+            <select id="leaderboardRange" class="select-control">
+              <option value="all">كل الفترات</option>
+              <option value="month">هذا الشهر</option>
+              <option value="week">هذا الأسبوع</option>
+            </select>
+          </div>
+        </header>
+
+        <!-- منصّة التتويج: المراكز الثلاثة الأولى -->
+        <div class="podium" id="podium" aria-label="المراكز الثلاثة الأولى"></div>
+
+        <!-- بقية الترتيب -->
+        <ol class="rank-list" id="rankList"></ol>
+
+        <p class="empty-state" id="leaderboardEmpty">
+          <i class="fa-solid fa-ranking-star" aria-hidden="true"></i>
+          لا توجد نقاط بعد، أجِز أول مشروع لتبدأ المنافسة.
+        </p>
+      </section>
+    </main>
+  </div>
+
+  <!-- ===================================================================
+       5. النوافذ المنبثقة
+       =================================================================== -->
+
+  <!-- ------------------- 5.1 نموذج إضافة/تعديل مشروع ------------------- -->
+  <div class="modal-overlay" id="addProjectModal" role="dialog" aria-modal="true"
+       aria-labelledby="addProjectTitle" hidden>
+    <div class="modal modal-md">
+      <header class="modal-header">
+        <h2 class="modal-title" id="addProjectTitle">
+          <i class="fa-solid fa-folder-plus" aria-hidden="true"></i>
+          <span id="projectFormTitle">إضافة مشروع جديد</span>
+        </h2>
+        <button type="button" class="btn btn-icon modal-close" data-close="addProjectModal"
+                aria-label="إغلاق النافذة">
+          <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        </button>
+      </header>
+
+      <form id="addProjectForm" novalidate>
+        <div class="modal-body">
+          <div class="field">
+            <label class="field-label" for="projectTitle">
+              اسم المشروع <span class="required" aria-hidden="true">*</span>
+            </label>
+            <input type="text" id="projectTitle" name="title" class="input-control"
+                   placeholder="مثال: منصة حجوزات ذكية" required maxlength="80" autocomplete="off" />
+            <p class="field-error" id="projectTitleError" hidden>الرجاء إدخال اسم المشروع.</p>
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="projectTrainee">
+              المتدرب المسؤول <span class="required" aria-hidden="true">*</span>
+            </label>
+            <!-- الخيارات تُحقن من JavaScript حسب المتدربين المسجّلين -->
+            <select id="projectTrainee" name="traineeId" class="select-control" required></select>
+            <p class="field-error" id="projectTraineeError" hidden>الرجاء اختيار متدرب.</p>
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="projectPlatform">
+              <i class="fa-solid fa-building-columns" aria-hidden="true"></i>
+              الجهة التدريبية
+            </label>
+            <!-- الخيارات تُحقن من JavaScript من جدول platforms -->
+            <select id="projectPlatform" name="platformId" class="select-control"></select>
+            <p class="field-hint">تُضبط تلقائياً على جهة المتدرب، ويمكن تغييرها.</p>
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="projectDescription">وصف المشروع</label>
+            <textarea id="projectDescription" name="description" class="input-control" rows="3"
+                      placeholder="وصف مختصر لفكرة المشروع وأهدافه..." maxlength="220"></textarea>
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="projectFeedback">
+              <i class="fa-solid fa-comment-dots" aria-hidden="true"></i>
+              ملاحظات التقييم
+            </label>
+            <textarea id="projectFeedback" name="feedback" class="input-control" rows="3"
+                      placeholder="ما الذي أحسنه المتدرب؟ وما الذي يحتاج تحسيناً؟" maxlength="600"></textarea>
+            <p class="field-hint">تظهر للمتدرب وتُحفظ مع المشروع. يملؤها المُقيّم الذكي تلقائياً عند اعتماد نتيجته.</p>
+          </div>
+
+          <div class="form-grid">
+            <div class="field">
+              <label class="field-label" for="projectStatus">حالة التقييم</label>
+              <select id="projectStatus" name="status" class="select-control">
+                <option value="under_review">تحت التقييم</option>
+                <option value="needs_revision">يحتاج تعديل</option>
+                <option value="approved">مُجاز</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label class="field-label" for="projectDueDate">
+                <i class="fa-regular fa-calendar" aria-hidden="true"></i>
+                الموعد النهائي
+              </label>
+              <input type="date" id="projectDueDate" name="dueDate" class="input-control" />
+              <p class="field-hint">يُنبّه على المشروع حين يقترب الموعد أو يتأخر.</p>
+            </div>
+
+            <div class="field">
+              <label class="field-label" for="projectScore">الدرجة</label>
+              <input type="number" id="projectScore" name="score" class="input-control"
+                     min="0" max="100" step="1" placeholder="—" inputmode="numeric" />
+              <p class="field-hint">اتركه فارغاً إن لم يُقيَّم بعد.</p>
+            </div>
+          </div>
+        </div>
+
+        <footer class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-close="addProjectModal">
+            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+            إلغاء
+          </button>
+          <button type="submit" class="btn btn-primary">
+            <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>
+            <span id="projectSubmitLabel">حفظ المشروع</span>
+          </button>
+        </footer>
+      </form>
+    </div>
+  </div>
+
+  <!-- ------------------- 5.2 نموذج إضافة/تعديل متدرب ------------------- -->
+  <div class="modal-overlay" id="addTraineeModal" role="dialog" aria-modal="true"
+       aria-labelledby="addTraineeTitle" hidden>
+    <div class="modal modal-md">
+      <header class="modal-header">
+        <h2 class="modal-title" id="addTraineeTitle">
+          <i class="fa-solid fa-user-plus" aria-hidden="true"></i>
+          <span id="traineeFormTitle">إضافة متدرب جديد</span>
+        </h2>
+        <button type="button" class="btn btn-icon modal-close" data-close="addTraineeModal"
+                aria-label="إغلاق النافذة">
+          <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        </button>
+      </header>
+
+      <form id="addTraineeForm" novalidate>
+        <div class="modal-body">
+          <div class="form-grid">
+            <div class="field">
+              <label class="field-label" for="traineeName">
+                اسم المتدرب <span class="required" aria-hidden="true">*</span>
+              </label>
+              <input type="text" id="traineeName" name="name" class="input-control"
+                     placeholder="مثال: نورة العتيبي" required maxlength="60" autocomplete="off" />
+              <p class="field-error" id="traineeNameError" hidden>الرجاء إدخال اسم المتدرب.</p>
+            </div>
+
+            <div class="field">
+              <label class="field-label" for="traineeTrack">المسار التدريبي</label>
+              <!-- الخيارات تُحقن من JavaScript من جدول tracks -->
+              <select id="traineeTrack" name="track" class="select-control"></select>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="traineeTrackLabel">وصف المسار (اختياري)</label>
+            <input type="text" id="traineeTrackLabel" name="trackLabel" class="input-control"
+                   placeholder="مثال: هندسة البرمجيات والواجهات" maxlength="80" autocomplete="off" />
+            <p class="field-hint">يظهر أسفل اسم المتدرب وفي الشهادة. يُستخدم اسم المسار تلقائياً إن تُرك فارغاً.</p>
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="traineePlatform">
+              <i class="fa-solid fa-building-columns" aria-hidden="true"></i>
+              الجهة التدريبية
+            </label>
+            <select id="traineePlatform" name="platformId" class="select-control"></select>
+            <p class="field-hint">اسم الجهة يظهر أعلى شهادة هذا المتدرب.</p>
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="traineeBootcamp">
+              <i class="fa-solid fa-flag" aria-hidden="true"></i>
+              اسم المعسكر
+            </label>
+            <input type="text" id="traineeBootcamp" name="bootcamp" class="input-control"
+                   placeholder="مثال: معسكر التقنية المتقدمة" maxlength="80" autocomplete="off" />
+            <p class="field-hint">يظهر في شهادة هذا المتدرب. يُستخدم المعسكر الافتراضي إن تُرك فارغاً.</p>
+          </div>
+
+          <fieldset class="skills-fieldset">
+            <legend class="field-label">
+              <i class="fa-solid fa-sliders" aria-hidden="true"></i>
+              المستوى المبدئي للمهارات
+            </legend>
+
+            <!-- أشرطة المهارات تُبنى من JavaScript حسب المسار المختار -->
+            <div id="skillsFields"></div>
+
+            <p class="field-hint" id="skillsTrackHint">
+              <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+              المهارات تتبع المسار المختار أعلاه.
+            </p>
+          </fieldset>
+        </div>
+
+        <footer class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-close="addTraineeModal">
+            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+            إلغاء
+          </button>
+          <button type="submit" class="btn btn-primary">
+            <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>
+            <span id="traineeSubmitLabel">حفظ المتدرب</span>
+          </button>
+        </footer>
+      </form>
+    </div>
+  </div>
+
+  <!-- ------------------- 5.3 المخطط الراداري للمهارات ------------------- -->
+  <div class="modal-overlay" id="skillsModal" role="dialog" aria-modal="true"
+       aria-labelledby="skillsModalTitle" hidden>
+    <div class="modal modal-md">
+      <header class="modal-header">
+        <h2 class="modal-title" id="skillsModalTitle">
+          <i class="fa-solid fa-chart-pie" aria-hidden="true"></i>
+          مخطط المهارات
+        </h2>
+        <button type="button" class="btn btn-icon modal-close" data-close="skillsModal"
+                aria-label="إغلاق النافذة">
+          <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        </button>
+      </header>
+
+      <div class="modal-body">
+        <div class="skills-trainee">
+          <img class="trainee-avatar lg" id="skillsAvatar" src="" alt="" />
+          <div>
+            <h3 id="skillsTraineeName">—</h3>
+            <p class="muted" id="skillsTraineeTrack">—</p>
+          </div>
+        </div>
+
+        <!-- عنصر Chart.js -->
+        <div class="chart-wrapper">
+          <canvas id="skillsRadar" width="420" height="420" role="img"
+                  aria-label="مخطط راداري يوضح مستوى مهارات المتدرب"></canvas>
+        </div>
+
+        <ul class="skills-legend" id="skillsLegend"></ul>
+      </div>
+
+      <footer class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-close="skillsModal">
+          <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+          إغلاق
+        </button>
+        <button type="button" class="btn btn-primary" id="openCertificateFromSkills">
+          <i class="fa-solid fa-award" aria-hidden="true"></i>
+          عرض الشهادة
+        </button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- ------------------- 5.4 شهادة الاجتياز ------------------- -->
+  <div class="modal-overlay" id="certificateModal" role="dialog" aria-modal="true"
+       aria-labelledby="certificateModalTitle" hidden>
+    <div class="modal modal-lg">
+      <header class="modal-header no-print">
+        <h2 class="modal-title" id="certificateModalTitle">
+          <i class="fa-solid fa-award" aria-hidden="true"></i>
+          شهادة اجتياز المعسكر
+        </h2>
+        <button type="button" class="btn btn-icon modal-close" data-close="certificateModal"
+                aria-label="إغلاق النافذة">
+          <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        </button>
+      </header>
+
+      <div class="modal-body">
+        <!-- المنطقة القابلة للطباعة -->
+        <section class="certificate" id="certificatePrintArea">
+          <div class="certificate-border">
+            <div class="certificate-head">
+              <i class="fa-solid fa-laptop-code cert-logo" aria-hidden="true"></i>
+              <p class="cert-org" id="certPlatform">منصة إدارة معسكرات البرمجة</p>
+            </div>
+
+            <h3 class="cert-title">شهادة اجتياز</h3>
+            <p class="cert-intro">تشهد إدارة المعسكر بأن المتدرب/ة</p>
+
+            <p class="cert-name" id="certTraineeName">—</p>
+
+            <p class="cert-body">
+              قد أتمّ/ت بنجاح متطلبات مسار
+              <strong id="certTrack">—</strong>
+              بمعدل تقييم
+              <strong id="certScore">—</strong>
+              ضمن معسكر
+              <strong id="certBootcamp">التقنية المتقدمة</strong>.
+            </p>
+
+            <div class="cert-meta">
+              <div class="cert-meta-item">
+                <span class="cert-meta-label">تاريخ الإصدار</span>
+                <span class="cert-meta-value" id="certDate">—</span>
+              </div>
+              <div class="cert-seal">
+                <i class="fa-solid fa-certificate" aria-hidden="true"></i>
+                <span>ختم المعسكر</span>
+              </div>
+              <div class="cert-meta-item">
+                <span class="cert-meta-label">رقم الشهادة</span>
+                <span class="cert-meta-value" id="certSerial">—</span>
+              </div>
+            </div>
+
+            <div class="cert-signature">
+              <span class="sig-line"></span>
+              <span class="sig-label">مدير المعسكر</span>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <footer class="modal-footer no-print">
+        <button type="button" class="btn btn-secondary" data-close="certificateModal">
+          <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+          إغلاق
+        </button>
+        <button type="button" class="btn btn-primary" id="printCertificateBtn">
+          <i class="fa-solid fa-print" aria-hidden="true"></i>
+          طباعة الشهادة
+        </button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- ------------------- 5.5 المُقيّم الذكي ------------------- -->
+  <div class="modal-overlay" id="aiReviewModal" role="dialog" aria-modal="true"
+       aria-labelledby="aiReviewTitle" hidden>
+    <div class="modal modal-md">
+      <header class="modal-header">
+        <h2 class="modal-title" id="aiReviewTitle">
+          <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>
+          المُقيّم الذكي
+        </h2>
+        <button type="button" class="btn btn-icon modal-close" data-close="aiReviewModal"
+                aria-label="إغلاق النافذة">
+          <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        </button>
+      </header>
+
+      <div class="modal-body">
+        <div class="ai-project">
+          <span class="ai-project-label">المشروع قيد المراجعة</span>
+          <h3 class="ai-project-title" id="aiProjectTitle">—</h3>
+          <p class="muted" id="aiProjectOwner">—</p>
+        </div>
+
+        <!-- حالة التحليل -->
+        <div class="ai-thinking" id="aiThinking" hidden>
+          <span class="ai-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+          <p class="ai-thinking-text" id="aiThinkingText">جارٍ تحليل الكود ومعايير التقييم...</p>
+          <div class="ai-progress"><div class="ai-progress-bar" id="aiProgressBar"></div></div>
+        </div>
+
+        <!-- نتيجة التحليل -->
+        <div class="ai-result" id="aiResult" hidden>
+          <div class="ai-score-ring" id="aiScoreRing" style="--score:0">
+            <span class="ai-score-value" id="aiScoreValue">0</span>
+            <span class="ai-score-label">الدرجة</span>
+          </div>
+
+          <p class="ai-verdict" id="aiVerdict">—</p>
+
+          <h4 class="ai-section-title">
+            <i class="fa-solid fa-list-check" aria-hidden="true"></i>
+            معايير التقييم
+          </h4>
+          <ul class="ai-criteria" id="aiCriteria"></ul>
+
+          <h4 class="ai-section-title">
+            <i class="fa-solid fa-lightbulb" aria-hidden="true"></i>
+            ملاحظات وتوصيات
+          </h4>
+          <ul class="ai-notes" id="aiNotes"></ul>
+        </div>
+      </div>
+
+      <footer class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-close="aiReviewModal">
+          <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+          إغلاق
+        </button>
+        <button type="button" class="btn btn-secondary" id="aiRerunBtn" hidden>
+          <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
+          إعادة التحليل
+        </button>
+        <button type="button" class="btn btn-primary" id="aiApplyBtn" disabled>
+          <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
+          اعتماد نتيجة التقييم
+        </button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- ------------------- 5.6 خريطة مسار التعلم ------------------- -->
+  <div class="modal-overlay" id="journeyModal" role="dialog" aria-modal="true"
+       aria-labelledby="journeyTitle" hidden>
+    <div class="modal modal-lg">
+      <header class="modal-header">
+        <h2 class="modal-title" id="journeyTitle">
+          <i class="fa-solid fa-map-location-dot" aria-hidden="true"></i>
+          خريطة مسار التعلم
+        </h2>
+        <button type="button" class="btn btn-icon modal-close" data-close="journeyModal"
+                aria-label="إغلاق النافذة">
+          <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        </button>
+      </header>
+
+      <div class="modal-body">
+        <div class="skills-trainee">
+          <img class="trainee-avatar lg" id="journeyAvatar" src="" alt="" />
+          <div>
+            <h3 id="journeyTraineeName">—</h3>
+            <p class="muted" id="journeyTraineeTrack">—</p>
+          </div>
+        </div>
+
+        <div class="journey-summary">
+          <div class="journey-progress">
+            <div class="journey-progress-bar" id="journeyProgressBar" style="width:0%"></div>
+          </div>
+          <span class="journey-progress-label" id="journeyProgressLabel">0 من 0 مرحلة مكتملة</span>
+        </div>
+
+        <!-- عقد المسار -->
+        <ol class="journey-map" id="journeyMap"></ol>
+      </div>
+
+      <footer class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-close="journeyModal">
+          <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+          إغلاق
+        </button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- ------------------- 5.8 إعدادات المنصة ------------------- -->
+  <div class="modal-overlay" id="settingsModal" role="dialog" aria-modal="true"
+       aria-labelledby="settingsTitle" hidden>
+    <div class="modal modal-md">
+      <header class="modal-header">
+        <h2 class="modal-title" id="settingsTitle">
+          <i class="fa-solid fa-gear" aria-hidden="true"></i>
+          إعدادات المنصة
+        </h2>
+        <button type="button" class="btn btn-icon modal-close" data-close="settingsModal"
+                aria-label="إغلاق النافذة">
+          <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        </button>
+      </header>
+
+      <!-- تبويبات الإعدادات -->
+      <div class="settings-tabs" role="tablist" aria-label="أقسام الإعدادات">
+        <button type="button" class="settings-tab is-active" data-tab="platforms"
+                role="tab" aria-selected="true">
+          <i class="fa-solid fa-building-columns" aria-hidden="true"></i>
+          الجهات التدريبية
+        </button>
+        <button type="button" class="settings-tab" data-tab="tracks"
+                role="tab" aria-selected="false">
+          <i class="fa-solid fa-route" aria-hidden="true"></i>
+          المسارات
+        </button>
+        <button type="button" class="settings-tab" data-tab="general"
+                role="tab" aria-selected="false">
+          <i class="fa-solid fa-sliders" aria-hidden="true"></i>
+          عام
+        </button>
+      </div>
+
+      <div class="modal-body">
+
+        <!-- ========== الجهات التدريبية ========== -->
+        <section class="settings-panel" data-panel="platforms">
+          <p class="field-hint">
+            <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+            اسم الجهة يظهر أعلى شهادة كل متدرب يتبعها.
+          </p>
+
+          <ul class="manager-list" id="platformsList"></ul>
+
+          <form id="addPlatformForm" class="manager-add" novalidate>
+            <div class="manager-add-row">
+              <input type="text" name="name" class="input-control" required maxlength="80"
+                     placeholder="اسم الجهة — مثال: أكاديمية طويق" autocomplete="off" />
+              <input type="text" name="shortName" class="input-control manager-short" maxlength="40"
+                     placeholder="مختصر" autocomplete="off" />
+              <input type="color" name="color" class="color-input" value="#4f46e5"
+                     aria-label="لون الجهة" />
+              <button type="submit" class="btn btn-primary">
+                <i class="fa-solid fa-plus" aria-hidden="true"></i>
+                <span>إضافة</span>
+              </button>
+            </div>
+            <p class="field-error" id="platformNameFieldError" hidden>الرجاء إدخال اسم الجهة.</p>
+          </form>
+        </section>
+
+        <!-- ========== المسارات التدريبية ========== -->
+        <section class="settings-panel" data-panel="tracks" hidden>
+          <p class="field-hint">
+            <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+            المسار يظهر في بطاقة المتدرب وفي نص شهادته.
+          </p>
+
+          <ul class="manager-list" id="tracksList"></ul>
+
+          <form id="addTrackForm" class="manager-add" novalidate>
+            <div class="manager-add-row">
+              <input type="text" name="label" class="input-control" required maxlength="80"
+                     placeholder="اسم المسار — مثال: تطوير الألعاب" autocomplete="off" />
+              <input type="text" name="id" class="input-control manager-short" maxlength="30"
+                     placeholder="GameDev" autocomplete="off" dir="ltr" />
+              <input type="color" name="color" class="color-input" value="#4f46e5"
+                     aria-label="لون المسار" />
+              <button type="submit" class="btn btn-primary">
+                <i class="fa-solid fa-plus" aria-hidden="true"></i>
+                <span>إضافة</span>
+              </button>
+            </div>
+            <div class="manager-add-row">
+              <input type="text" name="skills" class="input-control" maxlength="220"
+                     placeholder="المهارات مفصولة بفاصلة — مثال: Unity، C#، فيزياء الألعاب"
+                     autocomplete="off" />
+            </div>
+            <p class="field-hint">المعرّف بالإنجليزية بلا مسافات، ويُولَّد تلقائياً إن تُرك فارغاً.</p>
+            <p class="field-hint">المهارات تظهر كمزالج عند إضافة متدرب، ومستواها المبدئي ٥٠٪. إن تُركت فارغة وُضعت مهارات عامة.</p>
+            <p class="field-error" id="trackLabelFieldError" hidden>الرجاء إدخال اسم المسار.</p>
+          </form>
+        </section>
+
+        <!-- ========== إعدادات عامة ========== -->
+        <section class="settings-panel" data-panel="general" hidden>
+          <form id="settingsForm" novalidate>
+            <div class="field">
+              <label class="field-label" for="platformName">
+                اسم المنصة <span class="required" aria-hidden="true">*</span>
+              </label>
+              <input type="text" id="platformName" name="platform_name" class="input-control"
+                     placeholder="مثال: أكاديمية هاش التقنية" maxlength="80" required autocomplete="off" />
+              <p class="field-error" id="platformNameError" hidden>الرجاء إدخال اسم المنصة.</p>
+              <p class="field-hint">
+                احتياطي فقط: يظهر في الشهادة حين لا تكون للمتدرب جهة محدّدة.
+              </p>
+            </div>
+
+            <div class="field">
+              <label class="field-label" for="defaultBootcamp">اسم المعسكر الافتراضي</label>
+              <input type="text" id="defaultBootcamp" name="default_bootcamp" class="input-control"
+                     placeholder="مثال: معسكر التقنية المتقدمة" maxlength="80" autocomplete="off" />
+              <p class="field-hint">يُستخدم للمتدربين الجدد الذين لم يُحدَّد لهم معسكر.</p>
+            </div>
+
+            <button type="submit" class="btn btn-primary">
+              <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>
+              <span>حفظ الإعدادات</span>
+            </button>
+          </form>
+        </section>
+      </div>
+
+      <footer class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-close="settingsModal">
+          <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+          إغلاق
+        </button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- ------------------- 5.7 نافذة التأكيد ------------------- -->
+  <!-- تعديل مهارات مسار — بديل مربّع prompt الافتراضي -->
+  <div class="modal-overlay" id="skillsEditModal" role="dialog" aria-modal="true"
+       aria-labelledby="skillsEditTitle" hidden>
+    <div class="modal modal-sm">
+      <header class="modal-header">
+        <h2 class="modal-title" id="skillsEditTitle">
+          <i class="fa-solid fa-sliders" aria-hidden="true"></i>
+          مهارات المسار
+        </h2>
+        <button type="button" class="btn btn-icon modal-close" data-close="skillsEditModal"
+                aria-label="إغلاق النافذة">
+          <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        </button>
+      </header>
+
+      <div class="modal-body">
+        <p class="confirm-message" id="skillsEditTrack">—</p>
+
+        <div class="field">
+          <label class="field-label" for="skillsEditInput">المهارات، كل مهارة في سطر أو مفصولة بفاصلة</label>
+          <textarea id="skillsEditInput" class="input-control" rows="6"
+                    placeholder="Unity&#10;C#&#10;فيزياء الألعاب"></textarea>
+          <p class="field-hint">تظهر كمزالج عند إضافة متدرب، ومستواها المبدئي ٥٠٪. إن تُركت فارغة وُضعت مهارات عامة.</p>
+        </div>
+      </div>
+
+      <footer class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-close="skillsEditModal">
+          <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+          إلغاء
+        </button>
+        <button type="button" class="btn btn-primary" id="skillsEditSaveBtn">
+          <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>
+          حفظ المهارات
+        </button>
+      </footer>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="confirmModal" role="alertdialog" aria-modal="true"
+       aria-labelledby="confirmTitle" hidden>
+    <div class="modal modal-sm">
+      <header class="modal-header">
+        <h2 class="modal-title" id="confirmTitle">
+          <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+          تأكيد الإجراء
+        </h2>
+        <button type="button" class="btn btn-icon modal-close" data-close="confirmModal"
+                aria-label="إغلاق النافذة">
+          <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        </button>
+      </header>
+
+      <div class="modal-body">
+        <p class="confirm-message" id="confirmMessage">هل أنت متأكد؟</p>
+        <p class="confirm-detail" id="confirmDetail" hidden></p>
+      </div>
+
+      <footer class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-close="confirmModal">
+          <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+          إلغاء
+        </button>
+        <button type="button" class="btn btn-danger" id="confirmAcceptBtn">
+          <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
+          <span id="confirmAcceptLabel">تأكيد الحذف</span>
+        </button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- ===================================================================
+       مناطق التنبيهات
+       =================================================================== -->
+  <div class="toast-container" id="toastContainer" role="status" aria-live="polite"></div>
+  <div class="badge-toast-container" id="badgeToastContainer" role="status" aria-live="polite"></div>
+
+  <!-- ===================================================================
+       المكتبات الخارجية
+       =================================================================== -->
+  <!--
+    المكتبات الخارجية بإصدارات مثبّتة وبصمات integrity:
+    لو تغيّر الملف على الـ CDN رفض المتصفح تشغيله بدل أن ينفّذه بثقة.
+  -->
+
+  <!-- Chart.js: المخطط الراداري -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"
+          integrity="sha384-JUh163oCRItcbPme8pYnROHQMC6fNKTBWtRG3I3I0erJkzNgL7uxKlNwcrcFKeqF"
+          crossorigin="anonymous"></script>
+
+  <!-- SortableJS: السحب والإفلات -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"
+          integrity="sha384-BSxuMLxX+FCbTdYec3TbXlnMGEEM2QXTFdtDaveen71o+jswm2J36+xFqp8k4VHM"
+          crossorigin="anonymous"></script>
+
+  <!-- Canvas Confetti: احتفالات إنجاز المشاريع -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.js"
+          integrity="sha384-/Ko/tqVwPYurnBe+Mj8WWw+39WmyOZn/kU+neqXn4hRxGI575k07mB/hIekAT51+"
+          crossorigin="anonymous"></script>
+
+  <!-- منطق التطبيق: البيانات ثم العرض ثم المتحكّم -->
+  <!-- GitHub Pages: طبقة بيانات محلية بدل الخادم -->
+  <script src="js/dataService.demo.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
